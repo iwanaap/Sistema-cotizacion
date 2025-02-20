@@ -14,6 +14,7 @@ def editar_cotizacion(id):
 
     if request.method == 'POST':
         # Capturar los datos editados del formulario
+        numero_cotizacion = request.form['numeroCotizacion']
         empresa = request.form['empresa']
         rut = request.form['rut']
         contacto = request.form['contacto']
@@ -35,7 +36,7 @@ def editar_cotizacion(id):
 
         # Crear el JSON con toda la información, incluidos los nuevos campos
         datos_cotizacion = {
-            "numero_cotizacion": request.form.get("numeroCotizacion"),
+            "numero_cotizacion": numero_cotizacion,
             "empresa": empresa,
             "rut": rut,
             "contacto": contacto,
@@ -53,9 +54,9 @@ def editar_cotizacion(id):
         # Actualizamos la cotización en la base de datos (actualizando también el JSON completo)
         cursor.execute("""
             UPDATE cotizaciones
-            SET empresa = ?, rut = ?, contacto = ?, telefono = ?, email = ?, fecha = ?, productos = ?, monto = ?, creador = ?, datos_cotizacion = ?
+            SET empresa = ?, rut = ?, contacto = ?, telefono = ?, email = ?, fecha = ?, productos = ?, monto = ?, creador = ?, datos_cotizacion = ?, numero_cotizacion = ?
             WHERE id = ?
-        """, (empresa, rut, contacto, telefono, email, fechaCotizacion, productos_json, monto_total, creador, datos_json, id))
+        """, (empresa, rut, contacto, telefono, email, fechaCotizacion, productos_json, monto_total, creador, datos_json, numero_cotizacion, id))
 
         conn.commit()
         conn.close()
