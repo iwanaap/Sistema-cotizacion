@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Editar Cotización</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="container mt-4">
+
+    <h2 class="mb-3">Editar Cotización N° {{ cotizacion.numero_cotizacion }}</h2>
+
+    <form action="{{ url_for('editar.editar_cotizacion', id=cotizacion.id) }}" method="POST">
+        <!-- Encabezado con información de la empresa a la izquierda y cotización/fecha a la derecha -->
+        <div class="row mb-4">
+            <div class="col-md-6 text-end">
+                <div class="mb-3">
+                    <label class="form-label">Número de Cotización</label>
+                    <input type="text" name="numeroCotizacion" class="form-control text-end" style="font-size: 1.2rem;" value="{{ cotizacion.numero_cotizacion }}" readonly>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" style="font-size: 1.2rem;"><strong>Fecha</strong></label>
+                    <input type="date" name="fechaCotizacion" class="form-control text-end" style="font-size: 1.2rem;" value="{{ cotizacion.fecha }}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Fin de encabezado -->
+
+        <!-- Contacto -->
+        <div class="mb-3">
+            <label class="form-label">Contacto</label>
+            <input type="text" name="contacto" class="form-control" value="{{ cotizacion.contacto }}" required>
+        </div>
+
+        <!-- Empresa -->
+        <div class="mb-3">
+            <label class="form-label">Empresa</label>
+            <input type="text" name="empresa" class="form-control" value="{{ cotizacion.empresa }}">
+        </div>
+
+        <!-- RUT -->
+        <div class="mb-3">
+            <label class="form-label">RUT</label>
+            <input type="text" name="rut" class="form-control" value="{{ cotizacion.rut }}">
+        </div>
+
+        <!-- Teléfono -->
+        <div class="mb-3">
+            <label class="form-label">Teléfono</label>
+            <input type="text" name="telefono" class="form-control" value="{{ cotizacion.telefono }}">
+        </div>
+
+        <!-- Email -->
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ cotizacion.email }}">
+        </div>
+
+        <!-- Productos -->
+        <div class="mb-3">
+            <label class="form-label">Productos</label>
+            <table class="table" id="productosTable">
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Formato</th>
+                        <th>Precio</th>
+                        <th>Subtotal</th>
+                        <th>Costo</th>
+                        <th>Link</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for producto in cotizacion.productos %}
+                    <tr>
+                        <td><input type="text" class="form-control producto" value="{{ producto.producto }}" required></td>
+                        <td><input type="number" class="form-control cantidad" value="{{ producto.cantidad }}" required></td>
+                        <td><input type="text" class="form-control formato" value="{{ producto.formato }}"></td>
+                        <td><input type="text" class="form-control precio money-input" value="{{ format_money(producto.precio) }}" required></td>
+                        <td class="subtotal">{{ format_money(producto.subtotal) }}</td>
+                        <td><input type="text" class="form-control costo money-input" value="{{ format_money(producto.costo) }}"></td>
+                        <td><input type="text" class="form-control link" value="{{ producto.link }}"></td>
+                        <td><button type="button" class="btn btn-danger eliminarProducto">Eliminar</button></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                
+            </table>
+            <button type="button" class="btn btn-secondary" id="agregarProducto">Agregar Producto</button>
+            <input type="hidden" name="productos" id="productosInput">
+        </div>
+
+        <!-- Total -->
+        <div class="mb-3">
+            <h5>Resumen de Cotización</h5>
+            <div class="d-flex justify-content-between">
+                <span>Total Neto:</span>
+                <span id="totalNeto">{{ format_money(cotizacion.monto) if cotizacion.monto else "$0" }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>IVA (19%):</span>
+                <span id="iva">$0</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Total:</span>
+                <span id="total">$0</span>
+            </div>
+            <hr>
+            <h5>Resumen de Costos</h5>
+            <div class="d-flex justify-content-between">
+                <span>Total Costo:</span>
+                <span id="totalCosto">$0</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Ganancia Total:</span>
+                <span id="gananciaTotal">$0</span>
+            </div>
+        </div>
+
+        <!-- Plazo de entrega y forma de pago -->
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label for="plazo_entrega" class="form-label">Plazo de Entrega</label>
+                <input type="text" class="form-control" id="plazo_entrega" name="plazo_entrega" value="{{ cotizacion.plazo_entrega }}" required>
+            </div>
+            <div class="col-md-6">
+                <label for="forma_pago" class="form-label">Forma de Pago</label>
+                <input type="text" class="form-control" id="forma_pago" name="forma_pago" value="{{ cotizacion.forma_pago }}" required>
+            </div>
+        </div>
+        
+        <!-- Creador -->
+        <div class="mb-3">
+            <label class="form-label">Creado por</label>
+            <input type="text" name="creador" class="form-control" value="{{ cotizacion.creador }}">
+        </div>
+
+        <button type="submit" class="btn btn-success">Guardar Cambios</button>
+        <a href="/" class="btn btn-secondary">Volver</a>
+    </form>
+    
+    <script>
+        $(document).ready(function () {
+        
+            // Función para formatear valores con "$" y separador de miles con punto
+            function formatMoney(value) {
+                let number = parseFloat(value) || 0;
+                return "$" + number.toLocaleString("es-CL");
+            }
+        
+            // Función para limpiar el formato antes de realizar cálculos
+            function cleanMoney(value) {
+                return parseFloat(value.replace(/\./g, "").replace("$", "").replace(",", ".")) || 0;
+            }
+        
+            function actualizarProductosInput() {
+                var productos = [];
+                var totalNeto = 0;
+                var totalCosto = 0;
+        
+                $("#productosTable tbody tr").each(function () {
+                    var producto = $(this).find(".producto").val();
+                    var cantidad = parseFloat($(this).find(".cantidad").val()) || 0;
+                    var formato = $(this).find(".formato").val();
+                    var precio = cleanMoney($(this).find(".precio").val()) || 0;
+                    var costo = cleanMoney($(this).find(".costo").val()) || 0;
+                    var link = $(this).find(".link").val();
+                    var subtotal = cantidad * precio;
+                    var subtotalCosto = cantidad * costo;
+        
+                    $(this).find(".subtotal").text(formatMoney(subtotal)); // Aplicar formato a subtotal
+        
+                    productos.push({
+                        producto: producto,
+                        cantidad: cantidad,
+                        formato: formato,
+                        precio: precio,  // Guardar sin formato
+                        subtotal: subtotal,  // Guardar sin formato
+                        costo: costo,  // Guardar sin formato
+                        subtotalCosto: subtotalCosto,
+                        link: link
+                    });
+        
+                    totalNeto += subtotal;
+                    totalCosto += subtotalCosto;
+                });
+        
+                $("#productosInput").val(JSON.stringify(productos));
+        
+                var iva = totalNeto * 0.19;
+                var total = totalNeto + iva;
+        
+                $("#totalNeto").text(formatMoney(totalNeto));
+                $("#iva").text(formatMoney(iva));
+                $("#total").text(formatMoney(total));
+            }
+        
+            // Formatear los valores iniciales cuando se carga la página
+            function formatearValoresIniciales() {
+                $("#productosTable tbody tr").each(function () {
+                    var precio = $(this).find(".precio").val();
+                    var costo = $(this).find(".costo").val();
+                    var subtotal = $(this).find(".subtotal").text();
+        
+                    $(this).find(".precio").val(formatMoney(cleanMoney(precio))); // Formatear precio
+                    $(this).find(".costo").val(formatMoney(cleanMoney(costo))); // Formatear costo
+                    $(this).find(".subtotal").text(formatMoney(cleanMoney(subtotal))); // Formatear subtotal
+                });
+        
+                // Formatear los totales al cargar la página
+                $("#totalNeto").text(formatMoney(cleanMoney($("#totalNeto").text())));
+                $("#iva").text(formatMoney(cleanMoney($("#iva").text())));
+                $("#total").text(formatMoney(cleanMoney($("#total").text())));
+            }
+        
+            $("#productosTable").on("click", ".eliminarProducto", function () {
+                $(this).closest("tr").remove();
+                actualizarProductosInput();
+            });
+        
+            $("#productosTable").on("input", ".producto, .cantidad, .formato, .precio, .costo, .link", function () {
+                actualizarProductosInput();
+            });
+        
+            // Formatear valores al perder el foco (evita problemas con el cursor)
+            $("#productosTable").on("blur", ".precio, .costo", function () {
+                let value = cleanMoney(this.value);
+                if (value > 0) {
+                    this.value = formatMoney(value);
+                } else {
+                    this.value = ""; // Si no hay valor, lo deja vacío
+                }
+                actualizarProductosInput();
+            });
+        
+            // Limpiar el formato al enfocar el input
+            $("#productosTable").on("focus", ".precio, .costo", function () {
+                this.value = cleanMoney(this.value);
+            });
+        
+            $("form").on("submit", function () {
+                actualizarProductosInput();
+            });
+        
+            // Aplicar el formateo de valores iniciales al cargar la página
+            formatearValoresIniciales();
+        });
+        </script>
+        
+    <script>
+        $(document).ready(function () {
+        
+            // Función para formatear valores con "$" y separador de miles con punto
+            function formatMoney(value) {
+                let number = parseFloat(value) || 0;
+                return "$" + number.toLocaleString("es-CL");
+            }
+        
+            // Función para limpiar el formato antes de realizar cálculos
+            function cleanMoney(value) {
+                return parseFloat(value.replace(/\./g, "").replace("$", "").replace(",", ".")) || 0;
+            }
+        
+            function actualizarProductosInput() {
+                var productos = [];
+                var totalNeto = 0;
+                var totalCosto = 0;
+                
+                $("#productosTable tbody tr").each(function () {
+                    var producto = $(this).find(".producto").val();
+                    var cantidad = parseFloat($(this).find(".cantidad").val()) || 0;
+                    var formato = $(this).find(".formato").val();
+                    var precio = cleanMoney($(this).find(".precio").val()) || 0;
+                    var costo = cleanMoney($(this).find(".costo").val()) || 0;
+                    var link = $(this).find(".link").val();
+                    var subtotal = cantidad * precio;
+                    var subtotalCosto = cantidad * costo;
+        
+                    totalNeto += subtotal;
+                    totalCosto += subtotalCosto;
+        
+                    $(this).find(".subtotal").text(formatMoney(subtotal)); // Mostrar subtotal con formato
+        
+                    productos.push({
+                        producto: producto,
+                        cantidad: cantidad,
+                        formato: formato,
+                        precio: precio,  // Guardar sin formato
+                        subtotal: subtotal,  // Guardar sin formato
+                        costo: costo,  // Guardar sin formato
+                        link: link,
+                        subtotalCosto: subtotalCosto
+                    });
+                });
+        
+                $("#productosInput").val(JSON.stringify(productos));
+        
+                var iva = totalNeto * 0.19;
+                var total = totalNeto + iva;
+                var gananciaTotal = totalNeto - totalCosto;
+        
+                // 🔥 Aplicamos formateo sin decimales a los totales
+                $("#totalNeto").text(formatMoney(totalNeto));
+                $("#iva").text(formatMoney(iva));
+                $("#total").text(formatMoney(total));
+                $("#totalCosto").text(formatMoney(totalCosto));
+                $("#gananciaTotal").text(formatMoney(gananciaTotal));
+            }
+        
+            // Evento para agregar una nueva fila de producto con placeholder en los inputs de dinero
+            $("#agregarProducto").click(function () {
+                var nuevaFila = `
+                    <tr>
+                        <td><input type="text" class="form-control producto" required></td>
+                        <td><input type="number" class="form-control cantidad" required></td>
+                        <td><input type="text" class="form-control formato"></td>
+                        <td><input type="text" class="form-control precio money-input" placeholder="$0" required></td>
+                        <td class="subtotal">$0</td>
+                        <td><input type="text" class="form-control costo money-input" placeholder="$0"></td>
+                        <td><input type="text" class="form-control link"></td>
+                        <td><button type="button" class="btn btn-danger eliminarProducto">Eliminar</button></td>
+                    </tr>`;
+                $("#productosTable tbody").append(nuevaFila);
+            });
+        
+            // Evento para eliminar una fila
+            $("#productosTable").on("click", ".eliminarProducto", function () {
+                $(this).closest("tr").remove();
+                actualizarProductosInput();
+            });
+        
+            // Evento para actualizar dinámicamente los valores en la tabla
+            $("#productosTable").on("input", ".producto, .cantidad, .formato, .precio, .costo, .link", function () {
+                actualizarProductosInput();
+            });
+        
+            // Evento para formatear valores cuando el usuario termina de escribir (evita que el cursor se mueva)
+            $("#productosTable").on("blur", ".money-input", function () {
+                let value = cleanMoney(this.value);
+                if (value > 0) {
+                    this.value = formatMoney(value);
+                } else {
+                    this.value = ""; // Vaciar el campo si el usuario no ingresó nada
+                }
+                actualizarProductosInput();
+            });
+        
+            // Evento para limpiar el formato cuando el usuario empieza a escribir (evita que el cursor se mueva)
+            $("#productosTable").on("focus", ".money-input", function () {
+                this.value = cleanMoney(this.value);
+            });
+        
+            // Actualizar productos antes de enviar el formulario
+            $("form").on("submit", function () {
+                actualizarProductosInput();
+            });
+        
+            // Formatear valores iniciales al cargar la página
+            actualizarProductosInput();
+        
+        });
+    </script>
+        
+</body>
+</html>

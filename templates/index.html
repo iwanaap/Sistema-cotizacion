@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Listado de Cotizaciones</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-4">
+
+  <h2 class="mb-3">Listado de Cotizaciones</h2>
+  <a href="/crear" class="btn btn-primary mb-3">Crear Nueva Cotización</a>
+  <form method="POST" action="/">
+    <input type="text" name="search" class="form-control" placeholder="Buscar cotización..." value="{{ search_query }}">
+    <button type="submit" class="btn btn-primary mt-2">Buscar</button>
+  </form>
+  <a href="/clientes" class="btn btn-primary">Gestionar Clientes</a>
+
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>N° Cotización</th>
+        <th>Fecha</th>
+        <th>Contacto</th>
+        <th>Empresa</th>
+        <th>Monto Total</th>
+        <th>Creador</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for coti in cotizaciones %}
+      <tr>
+        <td>{{ coti.numero_cotizacion }}</td>
+        <td>{{ coti.fecha }}</td>
+        <td>{{ coti.contacto }}</td>
+        <td>{{ coti.empresa }}</td>
+        <td>{{ coti.total_formatted }}</td>
+        <td>{{ coti.creador }}</td>
+        <td>
+          <a href="/pdfs/{{ coti.id }}" class="btn btn-success btn-sm">PDF</a>
+          <a href="{{ url_for('editar.editar_cotizacion', id=coti.id) }}" class="btn btn-warning btn-sm">Editar</a>
+          <a href="/eliminar/{{ coti.id }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que deseas eliminar esta cotización?');">Eliminar</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</body>
+</html>
