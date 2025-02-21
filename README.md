@@ -10,7 +10,7 @@ El Sistema de Cotización es una aplicación web construida con Flask y SQLite, 
 
 1⃣ Clonar el repositorio
 
-git clone https://github.com/TU_USUARIO/Sistema-de-Cotizacion.git
+git clone https://github.com/iwanaap/Sistema-cotizacion.git
 cd Sistema-de-Cotizacion
 
 2⃣ Crear un entorno virtual (opcional pero recomendado)
@@ -32,14 +32,23 @@ La aplicación se ejecutará en http://127.0.0.1:5000/.
 📂 Estructura del Proyecto
 
 Sistema-de-Cotizacion/
+
 │── static/              # Archivos estáticos (CSS, imágenes, etc.)
+
 │── templates/           # Plantillas HTML
+
 │── app.py               # Archivo principal de la aplicación Flask
+
 │── clientes.py          # Módulo de gestión de clientes
+
 │── editar.py            # Módulo para editar cotizaciones
+
 │── cotizaciones.db      # Base de datos SQLite (NO SE DEBE SUBIR A GITHUB)
+
 │── requirements.txt     # Dependencias del proyecto
+
 │── .gitignore           # Archivos a ignorar en Git
+
 │── README.md            # Documentación del proyecto
 
 🖥️ Uso de la Aplicación
