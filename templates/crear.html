@@ -106,8 +106,12 @@
                 <span id="totalCosto">$0</span>
             </div>
             <div class="d-flex justify-content-between">
-                <span>Ganancia Total:</span>
-                <span id="gananciaTotal">$0</span>
+                <span>IVA Compra:</span>
+                <span id="ivaCompra">$0</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span>Ganancia Total (con resta de IVA):</span>
+                <span id="gananciaTotalRestaIva">$0</span>
             </div>
         </div>
 
@@ -187,6 +191,8 @@
                 var iva = totalNeto * 0.19;
                 var total = totalNeto + iva;
                 var gananciaTotal = totalNeto - totalCosto; // Calcular ganancia total
+                var ivaCompra = totalCosto * 0.19; // Calcular IVA de compra
+                var gananciaTotalRestaIva = gananciaTotal - (iva - (totalCosto * 0.19)); // Ganancia total con resta de IVA
         
                 // 🔥 Aplicamos formateo sin decimales a los totales
                 $("#totalNeto").text(formatMoney(totalNeto));
@@ -194,6 +200,8 @@
                 $("#total").text(formatMoney(total));
                 $("#totalCosto").text(formatMoney(totalCosto));  // Mostrar Total Costo
                 $("#gananciaTotal").text(formatMoney(gananciaTotal));  // Mostrar Ganancia Total
+                $("#ivaCompra").text(formatMoney(ivaCompra));  // Mostrar IVA Compra
+                $("#gananciaTotalRestaIva").text(formatMoney(gananciaTotalRestaIva));  // Mostrar Ganancia Total con resta de IVA
             }
         
             // Evento para agregar una nueva fila de producto con placeholder en los inputs de dinero
