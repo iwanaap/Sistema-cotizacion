@@ -71,34 +71,31 @@ def eliminar_cliente(id):
         conn.commit()
     return redirect(url_for('clientes.gestionar_clientes'))
 
-# Ruta para autocompletar clientes en `crear.html`
+# Ruta para buscar y autocompletar clientes
 @clientes_bp.route('/buscar_cliente', methods=['GET'])
 def buscar_cliente():
-    contacto = request.args.get('contacto', '').strip()
+    nombre = request.args.get('nombre', '').strip()
     
-    if not contacto:
-        return jsonify({"error": "No se proporcionó un nombre de contacto"}), 400
+    with closing(get_db_connection()) as conn:
+        cursor = conn.cursor()
+        
+        # Buscar cliente por nombre (búsqueda parcial, case-insensitive)
+        cursor.execute("""
+            SELECT nombre, rut, empresa, telefono, email
+            FROM clientes 
+            WHERE LOWER(nombre) LIKE LOWER(?) 
+            ORDER BY nombre
+            LIMIT 10
+        """, (f"%{nombre}%",))
+        
+        clientes = []
+        for row in cursor.fetchall():
+            clientes.append({
+                "nombre": row[0],
+                "rut": row[1],
+                "empresa": row[2],
+                "telefono": row[3],
+                "email": row[4]
+            })
     
-    conn = sqlite3.connect(DB_FILE, timeout=10)
-    conn.execute("PRAGMA journal_mode=WAL")
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        SELECT empresa, rut, telefono, email 
-        FROM clientes 
-        WHERE nombre = ? 
-        LIMIT 1
-    """, (contacto,))
-    
-    cliente = cursor.fetchone()
-    conn.close()
-
-    if cliente:
-        return jsonify({
-            "empresa": cliente[0],
-            "rut": cliente[1],
-            "telefono": cliente[2],
-            "email": cliente[3]
-        })
-    else:
-        return jsonify({"error": "Cliente no encontrado"}), 404
+    return jsonify(clientes)

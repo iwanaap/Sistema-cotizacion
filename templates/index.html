@@ -5,8 +5,38 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Listado de Cotizaciones</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    .form-select-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+      border-radius: 0.2rem;
+    }
+    .estado-cotizacion {
+      min-width: 120px;
+    }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="container mt-4">
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link active" href="/">Cotizaciones</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('ordenes_compra.lista_ordenes') }}">Órdenes de Compra</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('facturas.lista_facturas') }}">Facturas</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('clientes.gestionar_clientes') }}">Clientes</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
 
   <h2 class="mb-3">Listado de Cotizaciones</h2>
   <a href="/crear" class="btn btn-primary mb-3">Crear Nueva Cotización</a>
@@ -14,7 +44,6 @@
     <input type="text" name="search" class="form-control" placeholder="Buscar cotización..." value="{{ search_query }}">
     <button type="submit" class="btn btn-primary mt-2">Buscar</button>
   </form>
-  <a href="/clientes" class="btn btn-primary">Gestionar Clientes</a>
 
   <table class="table table-striped">
     <thead>
@@ -24,6 +53,10 @@
         <th>Contacto</th>
         <th>Empresa</th>
         <th>Monto Total</th>
+        <th>Estado</th>
+        <th>N° OC</th>
+        <th>N° Factura</th>
+        <th>Estado Pago</th>
         <th>Creador</th>
         <th>Acciones</th>
       </tr>
@@ -36,6 +69,33 @@
         <td>{{ coti.contacto }}</td>
         <td>{{ coti.empresa }}</td>
         <td>{{ coti.total_formatted }}</td>
+        <td>
+          <select class="form-select form-select-sm estado-cotizacion" data-cotizacion-id="{{ coti.id }}">
+            <option value="Pendiente" {% if coti.estado_cotizacion == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+            <option value="Aprobada" {% if coti.estado_cotizacion == 'Aprobada' %}selected{% endif %}>Aprobada</option>
+            <option value="Rechazada" {% if coti.estado_cotizacion == 'Rechazada' %}selected{% endif %}>Rechazada</option>
+            <option value="En Revisión" {% if coti.estado_cotizacion == 'En Revisión' %}selected{% endif %}>En Revisión</option>
+          </select>
+        </td>
+        <td>
+          {% if coti.numero_oc %}
+            <a href="{{ url_for('ordenes_compra.editar_orden_por_numero', numero_oc=coti.numero_oc) }}" class="text-primary text-decoration-none">
+              {{ coti.numero_oc }}
+            </a>
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>
+          {% if coti.numero_factura %}
+            <a href="{{ url_for('facturas.editar_factura_por_numero', numero_factura=coti.numero_factura) }}" class="text-primary text-decoration-none">
+              {{ coti.numero_factura }}
+            </a>
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>{{ coti.estado_pago }}</td>
         <td>{{ coti.creador }}</td>
         <td>
           <a href="/pdfs/{{ coti.id }}" class="btn btn-success btn-sm">PDF</a>
@@ -47,5 +107,35 @@
     </tbody>
   </table>
 
+  <script>
+    $(document).ready(function() {
+      // Manejar cambios en el estado de la cotización
+      $('.estado-cotizacion').change(function() {
+        const cotizacionId = $(this).data('cotizacion-id');
+        const nuevoEstado = $(this).val();
+        
+        // Enviar actualización al servidor
+        $.ajax({
+          url: '/actualizar_estado_cotizacion',
+          method: 'POST',
+          data: {
+            id: cotizacionId,
+            estado: nuevoEstado
+          },
+          success: function(response) {
+            if (response.success) {
+              // Opcional: mostrar mensaje de éxito
+              alert('Estado actualizado correctamente');
+            } else {
+              alert('Error al actualizar el estado');
+            }
+          },
+          error: function() {
+            alert('Error al actualizar el estado');
+          }
+        });
+      });
+    });
+  </script>
 </body>
 </html>

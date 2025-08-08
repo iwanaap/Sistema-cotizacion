@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Crear Orden de Compra</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="container mt-4">
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container-fluid">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Cotizaciones</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('ordenes_compra.lista_ordenes') }}">Órdenes de Compra</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('facturas.lista_facturas') }}">Facturas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('clientes.gestionar_clientes') }}">Clientes</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <h2 class="mb-3">{{ 'Editar' if edit else 'Crear' }} Orden de Compra</h2>
+
+    {% if mensaje %}
+    <div class="alert alert-info">{{ mensaje }}</div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" class="mb-4">
+        <!-- Sección: Información básica -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Información de la Orden</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="numero_oc" class="form-label">N° de Orden de Compra</label>
+                            <input type="text" class="form-control" id="numero_oc" name="numero_oc" 
+                                   value="{{ orden[1] if orden else numero_oc_prellenado if numero_oc_prellenado else '' }}" required>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="fecha" class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="fecha" name="fecha" 
+                                   value="{{ orden[3] if orden else '' }}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Información del Cliente -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Información del Cliente</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="cliente" class="form-label">Cliente</label>
+                            <input type="text" class="form-control" id="cliente" name="cliente" 
+                                   list="listaClientes" value="{{ orden[2] if orden else '' }}" required>
+                            <datalist id="listaClientes">
+                                {% for cliente in clientes %}
+                                <option value="{{ cliente }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="contacto" class="form-label">Nombre Contacto</label>
+                            <input type="text" class="form-control" id="contacto" name="contacto" 
+                                   value="{{ orden[4] if orden else '' }}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Información de Pago -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Información de Pago</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="monto_total" class="form-label">Monto Total OC</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="monto_total" name="monto_total" 
+                                       value="{{ orden[5] if orden else '' }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="estado_pago" class="form-label">Estado de Pago</label>
+                            <select class="form-control" id="estado_pago" name="estado_pago" required>
+                                <option value="Pendiente" {% if orden and orden[8] == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="Pagado" {% if orden and orden[8] == 'Pagado' %}selected{% endif %}>Pagado</option>
+                                <option value="Parcial" {% if orden and orden[8] == 'Parcial' %}selected{% endif %}>Pago Parcial</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Documentos Relacionados -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Documentos Relacionados</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="numero_cotizacion" class="form-label">N° Cotización</label>
+                            <input type="text" class="form-control" id="numero_cotizacion" name="numero_cotizacion" 
+                                   value="{{ orden[9] if orden else '' }}">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="form-check mb-2">
+                                <input type="checkbox" class="form-check-input" id="facturado" name="facturado"
+                                       {% if orden and orden[6] %}checked{% endif %}>
+                                <label class="form-check-label" for="facturado">¿Facturado?</label>
+                            </div>
+                            <label for="numero_factura" class="form-label">N° Factura</label>
+                            <input type="text" class="form-control" id="numero_factura" name="numero_factura" 
+                                   value="{{ orden[7] if orden else '' }}">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="pdf_documento" class="form-label">Documento PDF</label>
+                    {% if orden and orden[10] %}
+                        <p class="text-muted">Ya existe un documento PDF cargado. Subir uno nuevo lo reemplazará.</p>
+                    {% endif %}
+                    <input type="file" class="form-control" id="pdf_documento" name="pdf_documento" accept=".pdf">
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary">
+                {{ 'Guardar Cambios' if edit else 'Crear Orden de Compra' }}
+            </button>
+            <a href="{{ url_for('ordenes_compra.lista_ordenes') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+
+    <script>
+        // Habilitar/deshabilitar campo de número de factura según checkbox
+        document.getElementById('facturado').addEventListener('change', function() {
+            document.getElementById('numero_factura').disabled = !this.checked;
+        });
+
+        // Formatear monto con separadores de miles
+        document.getElementById('monto_total').addEventListener('blur', function() {
+            if (this.value) {
+                this.value = parseInt(this.value).toLocaleString('es-CL');
+            }
+        });
+    </script>
+</body>
+</html>

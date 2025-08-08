@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Crear Factura</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .cliente-suggestions {
+            position: absolute;
+            z-index: 1000;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+            width: 100%;
+            display: none;
+        }
+        .cliente-suggestion {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .cliente-suggestion:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body class="container mt-4">
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container-fluid">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Cotizaciones</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('ordenes_compra.lista_ordenes') }}">Órdenes de Compra</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="{{ url_for('facturas.lista_facturas') }}">Facturas</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('clientes.gestionar_clientes') }}">Clientes</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+    
+    <h2 class="mb-3">{{ 'Editar' if edit else 'Crear' }} Factura</h2>
+
+    {% if mensaje %}
+    <div class="alert alert-info">{{ mensaje }}</div>
+    {% endif %}
+
+    <form method="POST" class="mb-4">
+        <!-- Sección: Información del Documento -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Información del Documento</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="numero_factura" class="form-label">N° Factura</label>
+                            <input type="text" class="form-control" id="numero_factura" name="numero_factura" 
+                                   pattern="[0-9]+" title="Por favor ingrese solo números"
+                                   value="{{ factura[5] if factura else numero_factura_prellenado if numero_factura_prellenado else '' }}" required>
+                            <div class="invalid-feedback">
+                                El número de factura debe contener solo números.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="fecha" class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="fecha" name="fecha" 
+                                   value="{{ factura[6] if factura else '' }}" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="tipo_documento" class="form-label">Tipo Documento</label>
+                            <select class="form-control" id="tipo_documento" name="tipo_documento" required>
+                                <option value="Factura" {% if factura and factura[3] == 'Factura' %}selected{% endif %}>Factura</option>
+                                <option value="Factura Electrónica" {% if factura and factura[3] == 'Factura Electrónica' %}selected{% endif %}>Factura Electrónica</option>
+                                <option value="Boleta" {% if factura and factura[3] == 'Boleta' %}selected{% endif %}>Boleta</option>
+                                <option value="Boleta Electrónica" {% if factura and factura[3] == 'Boleta Electrónica' %}selected{% endif %}>Boleta Electrónica</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="condiciones_pago" class="form-label">Condiciones de Pago</label>
+                            <select class="form-control" id="condiciones_pago" name="condiciones_pago" required>
+                                <option value="Contado" {% if factura and factura[4] == 'Contado' %}selected{% endif %}>Contado</option>
+                                <option value="30 días" {% if factura and factura[4] == '30 días' %}selected{% endif %}>30 días</option>
+                                <option value="60 días" {% if factura and factura[4] == '60 días' %}selected{% endif %}>60 días</option>
+                                <option value="90 días" {% if factura and factura[4] == '90 días' %}selected{% endif %}>90 días</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Información del Cliente -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Información del Cliente</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="receptor" class="form-label">Receptor</label>
+                            <div style="position: relative;">
+                                <input type="text" class="form-control" id="receptor" name="receptor" 
+                                       value="{{ factura[2] if factura else '' }}" required autocomplete="off">
+                                <div id="clienteSuggestions" class="cliente-suggestions"></div>
+                            </div>
+                                {% for cliente in clientes %}
+                                <option value="{{ cliente }}">
+                                {% endfor %}
+                            </datalist>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="rut_receptor" class="form-label">RUT Receptor</label>
+                            <input type="text" class="form-control" id="rut_receptor" name="rut_receptor" 
+                                   value="{{ factura[1] if factura else '' }}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Información de Pago -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Información de Pago</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="monto_total" class="form-label">Monto Total</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="monto_total" name="monto_total" 
+                                       value="{{ factura[7] if factura else '' }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="estado_pago" class="form-label">Estado de Pago</label>
+                            <select class="form-control" id="estado_pago" name="estado_pago" required>
+                                <option value="Pendiente" {% if factura and factura[8] == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="Pagado" {% if factura and factura[8] == 'Pagado' %}selected{% endif %}>Pagado</option>
+                                <option value="Parcial" {% if factura and factura[8] == 'Parcial' %}selected{% endif %}>Pago Parcial</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección: Documentos Relacionados -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Documentos Relacionados</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="numero_cotizacion" class="form-label">N° Cotización</label>
+                            <input type="text" class="form-control" id="numero_cotizacion" name="numero_cotizacion" 
+                                   pattern="^[0-9]*$" title="Por favor ingrese solo números"
+                                   value="{{ factura[9] if factura else '' }}">
+                            <div class="invalid-feedback">
+                                Por favor ingrese un número de cotización válido.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="numero_oc" class="form-label">N° Orden de Compra</label>
+                            <input type="text" class="form-control" id="numero_oc" name="numero_oc" 
+                                   value="{{ factura[10] if factura else '' }}">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary">
+                {{ 'Guardar Cambios' if edit else 'Crear Factura' }}
+            </button>
+            <a href="{{ url_for('facturas.lista_facturas') }}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+
+    <script>
+        // Formatear monto con separadores de miles
+        document.getElementById('monto_total').addEventListener('blur', function() {
+            if (this.value) {
+                this.value = parseInt(this.value).toLocaleString('es-CL');
+            }
+        });
+
+        // Auto-completar información del cliente al seleccionar de la lista
+        document.getElementById('receptor').addEventListener('change', function() {
+            // Aquí puedes agregar la lógica para auto-completar el RUT cuando se selecciona un cliente
+            // Similar a como lo haces en el formulario de cotizaciones
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            let typingTimer;
+            const doneTypingInterval = 300;  // esperar 300ms después de que el usuario deje de escribir
+            
+            $('#receptor').on('input', function() {
+                clearTimeout(typingTimer);
+                if ($(this).val()) {
+                    typingTimer = setTimeout(buscarClientes, doneTypingInterval);
+                } else {
+                    $('#clienteSuggestions').empty().hide();
+                }
+            });
+
+            function buscarClientes() {
+                const nombre = $('#receptor').val();
+                
+                $.getJSON("{{ url_for('clientes.buscar_cliente') }}", { nombre: nombre })
+                    .done(function(clientes) {
+                        const suggestions = $('#clienteSuggestions');
+                        suggestions.empty();
+                        
+                        if (clientes.length > 0) {
+                            clientes.forEach(function(cliente) {
+                                const div = $('<div>')
+                                    .addClass('cliente-suggestion')
+                                    .text(cliente.nombre)
+                                    .data('cliente', cliente)
+                                    .click(function() {
+                                        const clienteData = $(this).data('cliente');
+                                        $('#receptor').val(clienteData.nombre);
+                                        $('#rut_receptor').val(clienteData.rut);
+                                        suggestions.hide();
+                                    });
+                                suggestions.append(div);
+                            });
+                            suggestions.show();
+                        } else {
+                            suggestions.hide();
+                        }
+                    });
+            }
+
+            // Cerrar sugerencias cuando se hace clic fuera
+            $(document).click(function(e) {
+                if (!$(e.target).closest('#receptor, #clienteSuggestions').length) {
+                    $('#clienteSuggestions').hide();
+                }
+            });
+
+            // Permitir escritura manual en caso de que no se encuentre el cliente
+            $('#rut_receptor').on('input', function() {
+                // No hacer nada, permitir la edición manual
+            });
+
+            // Validación del número de factura
+            $('#numero_factura').on('input', function() {
+                const value = $(this).val();
+                const isValid = /^[0-9]*$/.test(value);
+                
+                $(this).toggleClass('is-invalid', !isValid);
+                if (!isValid) {
+                    $(this).get(0).setCustomValidity('Por favor ingrese solo números');
+                } else {
+                    $(this).get(0).setCustomValidity('');
+                }
+            });
+
+            // Validación de números de cotización y OC
+            $('#numero_cotizacion, #numero_oc').on('input', function() {
+                const value = $(this).val();
+                // Permitir campo vacío o números
+                const isValid = value === '' || /^[0-9]*$/.test(value);
+                
+                $(this).toggleClass('is-invalid', !isValid);
+                if (!isValid) {
+                    $(this).get(0).setCustomValidity('Por favor ingrese solo números o deje el campo vacío');
+                } else {
+                    $(this).get(0).setCustomValidity('');
+                }
+            });
+
+            // Manejar el envío del formulario
+            $('form').on('submit', function(e) {
+                const cotizacionNum = $('#numero_cotizacion').val();
+                const ocNum = $('#numero_oc').val();
+                
+                if (cotizacionNum && !/^[0-9]+$/.test(cotizacionNum)) {
+                    e.preventDefault();
+                    $('#numero_cotizacion').addClass('is-invalid');
+                    return false;
+                }
+                
+                if (ocNum && !/^[0-9]+$/.test(ocNum)) {
+                    e.preventDefault();
+                    $('#numero_oc').addClass('is-invalid');
+                    return false;
+                }
+            });
+        });
+    </script>
+</body>
+</html>

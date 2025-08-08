@@ -6,12 +6,37 @@ editar_bp = Blueprint('editar', __name__, url_prefix='/editar')
 
 DB_FILE = "cotizaciones.db"
 
-# Ruta para editar una cotización
+# Ruta para editar una cotización por ID (mantener por compatibilidad)
 @editar_bp.route('/<int:id>', methods=['GET', 'POST'])
 def editar_cotizacion(id):
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
+    
+    # Obtener el número de cotización y redirigir a la nueva ruta
+    cursor.execute("SELECT numero_cotizacion FROM cotizaciones WHERE id = ?", (id,))
+    result = cursor.fetchone()
+    conn.close()
+    
+    if result:
+        return redirect(url_for('editar.editar_cotizacion_por_numero', numero_cotizacion=result[0]))
+    return "Cotización no encontrada", 404
 
+# Nueva ruta para editar por número de cotización
+@editar_bp.route('/cotizacion/<int:numero_cotizacion>', methods=['GET', 'POST'])
+def editar_cotizacion_por_numero(numero_cotizacion):
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    # Primero obtener el ID usando el número de cotización
+    cursor.execute("SELECT id FROM cotizaciones WHERE numero_cotizacion = ?", (numero_cotizacion,))
+    result = cursor.fetchone()
+    
+    if not result:
+        conn.close()
+        return "Cotización no encontrada", 404
+    
+    id = result[0]
+    
     if request.method == 'POST':
         # Capturar los datos editados del formulario
         numero_cotizacion = request.form['numeroCotizacion']

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, make_response
+from flask import Flask, render_template, request, redirect, url_for, make_response, jsonify
 import sqlite3
 from datetime import datetime
 import json
@@ -6,12 +6,16 @@ import pdfkit
 import os
 from clientes import clientes_bp  # Importar el Blueprint de clientes
 from editar import editar_bp  # Importar el Blueprint de edición
+from ordenes_compra import ordenes_compra_bp  # Importar el Blueprint de órdenes de compra
+from facturas import facturas_bp  # Importar el Blueprint de facturas
 
 app = Flask(__name__)
 
 # Registrar los Blueprints
 app.register_blueprint(clientes_bp)
 app.register_blueprint(editar_bp)
+app.register_blueprint(ordenes_compra_bp)
+app.register_blueprint(facturas_bp)
 
 # Archivo de la base de datos
 DB_FILE = "cotizaciones.db"
@@ -20,6 +24,7 @@ DB_FILE = "cotizaciones.db"
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
+    # Modificar la tabla de cotizaciones para agregar los nuevos campos
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS cotizaciones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,8 +37,12 @@ def init_db():
             productos TEXT,
             monto REAL,
             creador TEXT,
-            numero_cotizacion INTEGER,
-            datos_cotizacion TEXT
+            numero_cotizacion INTEGER UNIQUE,
+            datos_cotizacion TEXT,
+            estado_cotizacion TEXT DEFAULT 'Pendiente',
+            numero_oc TEXT,
+            numero_factura TEXT,
+            estado_pago TEXT DEFAULT 'Pendiente'
         )
     ''')
     conn.commit()
@@ -81,7 +90,11 @@ def index():
             "total": total,
             "total_str": total_str,
             "total_formatted": total_formatted,
-            "creador": row[9]
+            "creador": row[9],
+            "estado_cotizacion": row[12],
+            "numero_oc": row[13],
+            "numero_factura": row[14],
+            "estado_pago": row[15]
         }
 
         # Filtrar en Python, incluyendo también el monto total en distintos formatos
@@ -95,6 +108,29 @@ def index():
             cotizaciones_list.append(cotizacion_dict)
     
     return render_template("index.html", cotizaciones=cotizaciones_list, search_query=search_query)
+
+@app.route('/actualizar_estado_cotizacion', methods=['POST'])
+def actualizar_estado_cotizacion():
+    if request.method == 'POST':
+        cotizacion_id = request.form.get('id')
+        nuevo_estado = request.form.get('estado')
+        
+        if cotizacion_id and nuevo_estado:
+            try:
+                conn = sqlite3.connect(DB_FILE)
+                cursor = conn.cursor()
+                cursor.execute('''
+                    UPDATE cotizaciones 
+                    SET estado_cotizacion = ? 
+                    WHERE id = ?
+                ''', (nuevo_estado, cotizacion_id))
+                conn.commit()
+                conn.close()
+                return jsonify({'success': True})
+            except Exception as e:
+                return jsonify({'success': False, 'error': str(e)})
+    
+    return jsonify({'success': False, 'error': 'Datos inválidos'})
 
 
 
@@ -264,4 +300,4 @@ def eliminar(id):
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5050, debug=True)
