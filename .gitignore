@@ -1,0 +1,45 @@
+# Entorno virtual
+venv/
+env/
+ENV/
+
+# Base de datos SQLite
+*.db
+*.db-journal
+cotizaciones.db
+cotizaciones.db-*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs y editores
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Archivos de log
+*.log
+logs/
+
+# Archivos generados
+instance/
+.webassets-cache
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
