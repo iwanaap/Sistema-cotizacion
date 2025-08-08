@@ -1,86 +1,154 @@
-👌 Sistema de Cotización
+# Sistema de Cotización
 
-El Sistema de Cotización es una aplicación web construida con Flask y SQLite, que permite gestionar clientes y generar cotizaciones en formato PDF.
+![Python](https://img.shields.io/badge/Python-3.8%2B-blue)
+![Flask](https://img.shields.io/badge/Flask-3.1.0-green)
+![SQLite](https://img.shields.io/badge/SQLite-3-blue)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-🚀 Características
+El Sistema de Cotización es una aplicación web profesional construida con Flask y SQLite, diseñada para simplificar la gestión de clientes y la generación de cotizaciones en formato PDF para pequeñas y medianas empresas.
 
-✅ Gestión de clientes (agregar, editar, eliminar).✅ Creación y edición de cotizaciones con productos detallados.✅ Generación de cotizaciones en PDF con formato profesional.✅ Cálculo automático de IVA y totales.✅ Interfaz responsiva con Bootstrap.✅ Autocompletado de datos de clientes.✅ Base de datos SQLite para almacenamiento local.
+## 🚀 Características
 
-🛠️ Instalación
+- **Gestión de Clientes**
+  - Agregar, editar y eliminar información de clientes
+  - Base de datos SQLite para almacenamiento persistente
+  - Interfaz intuitiva para manejo de datos
 
-1⃣ Clonar el repositorio
+- **Sistema de Cotizaciones**
+  - Creación y edición de cotizaciones con productos detallados
+  - Autocompletado de datos de clientes existentes
+  - Cálculo automático de IVA (19%) y totales
+  - Generación de cotizaciones en PDF con formato profesional
 
-git clone https://github.com/iwanaap/Sistema-cotizacion.git
-cd Sistema-de-Cotizacion
+- **Interfaz de Usuario**
+  - Diseño responsivo con Bootstrap
+  - Navegación intuitiva
+  - Experiencia de usuario optimizada
 
-2⃣ Crear un entorno virtual (opcional pero recomendado)
+## ⚙️ Requisitos Previos
 
-python -m venv venv
-source venv/bin/activate  # En macOS/Linux
-venv\Scripts\activate     # En Windows
+- Python 3.8 o superior
+- pip (gestor de paquetes de Python)
+- wkhtmltopdf (necesario para la generación de PDFs)
 
-3⃣ Instalar las dependencias
+## 🛠️ Instalación
 
-pip install -r requirements.txt
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://github.com/iwanaap/Sistema-cotizacion.git
+   cd Sistema-cotizacion
+   ```
 
-4⃣ Ejecutar la aplicación
+2. **Crear un entorno virtual**
+   ```bash
+   python -m venv venv
+   
+   # En Windows
+   .\venv\Scripts\activate
+   
+   # En macOS/Linux
+   source venv/bin/activate
+   ```
 
-python app.py
+3. **Instalar las dependencias**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-La aplicación se ejecutará en http://127.0.0.1:5000/.
+4. **Configurar la base de datos**
+   ```bash
+   # La base de datos se inicializará automáticamente al ejecutar la aplicación
+   python app.py
+   ```
 
-📂 Estructura del Proyecto
+5. **Iniciar la aplicación**
+   ```bash
+   python app.py
+   ```
 
-Sistema-de-Cotizacion/
+La aplicación estará disponible en `http://127.0.0.1:5000/`
 
-│── static/              # Archivos estáticos (CSS, imágenes, etc.)
+## 📂 Estructura del Proyecto
 
-│── templates/           # Plantillas HTML
+```
+Sistema-cotizacion/
+├── static/                 # Archivos estáticos
+│   ├── css/               # Hojas de estilo
+│   ├── js/                # Scripts de JavaScript
+│   └── img/               # Imágenes
+├── templates/             # Plantillas HTML
+│   ├── clientes.html      # Vista de gestión de clientes
+│   ├── crear.html         # Formulario de creación
+│   ├── editar.html        # Vista de edición
+│   ├── index.html         # Página principal
+│   └── pdf.html           # Plantilla para PDFs
+├── app.py                 # Aplicación principal Flask
+├── clientes.py           # Módulo de gestión de clientes
+├── editar.py             # Módulo de edición de cotizaciones
+├── requirements.txt      # Dependencias del proyecto
+└── README.md             # Documentación
+```
 
-│── app.py               # Archivo principal de la aplicación Flask
+## 📱 Guía de Uso
 
-│── clientes.py          # Módulo de gestión de clientes
+### Gestión de Clientes
+- Accede a la sección de clientes desde el menú principal
+- Agrega nuevos clientes con su información completa
+- Edita o elimina clientes existentes
+- Utiliza el autocompletado al crear cotizaciones
 
-│── editar.py            # Módulo para editar cotizaciones
+### Creación de Cotizaciones
+- Selecciona un cliente existente o ingresa uno nuevo
+- Agrega productos con:
+  - Descripción detallada
+  - Cantidad
+  - Precio unitario
+- El sistema calculará automáticamente:
+  - Subtotal
+  - IVA (19%)
+  - Total final
 
-│── cotizaciones.db      # Base de datos SQLite (NO SE DEBE SUBIR A GITHUB)
+### Generación de PDFs
+- Previsualiza la cotización antes de generar el PDF
+- Personaliza el formato según tus necesidades
+- Descarga o envía el PDF directamente
 
-│── requirements.txt     # Dependencias del proyecto
+## ⚙️ Personalización
 
-│── .gitignore           # Archivos a ignorar en Git
+### Modificar el Diseño
+- Personaliza las plantillas HTML en `/templates`
+- Ajusta los estilos CSS en `/static/css`
+- Modifica el formato PDF en `templates/pdf.html`
 
-│── README.md            # Documentación del proyecto
+### Configuración del Sistema
+- Ajusta el porcentaje de IVA en `app.py`
+- Personaliza los campos de clientes en `clientes.py`
+- Modifica las validaciones en `editar.py`
 
-🖥️ Uso de la Aplicación
+## 🛡️ Seguridad
 
-1⃣ Gestión de Clientes
+- La base de datos SQLite (`cotizaciones.db`) se genera automáticamente
+- No se incluye en el repositorio por seguridad
+- Se recomienda realizar backups periódicos
 
-Desde la página principal, puedes agregar, editar y eliminar clientes.
+## 🤝 Contribuciones
 
-Los clientes registrados pueden ser autocompletados al crear una cotización.
+Las contribuciones son bienvenidas. Por favor:
 
-2⃣ Creación de Cotizaciones
+1. Haz un Fork del proyecto
+2. Crea una rama para tu característica (`git checkout -b feature/AmazingFeature`)
+3. Haz commit de tus cambios (`git commit -m 'Add: nueva característica'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
 
-Se pueden agregar productos con cantidad, precio y formato.
+## � Licencia
 
-El sistema calcula el total neto, IVA (19%) y total final automáticamente.
+Este proyecto está bajo la licencia MIT - ver el archivo [LICENSE](LICENSE) para más detalles.
 
-3⃣ Generación de PDF
+## 👤 Autor
 
-Cada cotización puede descargarse como archivo PDF con un diseño profesional.
+**Nelson Landaeta**
+- GitHub: [@iwanaap](https://github.com/iwanaap)
 
-⚙️ Configuración Adicional
-
-Si deseas personalizar el sistema, edita los archivos dentro de templates/ y static/.
-
-Para cambiar el formato de los PDFs, modifica el archivo pdf.html en la carpeta templates/.
-
-🤝 Contribuciones
-
-Si deseas mejorar el sistema, ¡eres bienvenido! Puedes enviar un pull request o reportar errores en la sección de Issues.
-
-🐝 Licencia
-
-Este proyecto se encuentra bajo la licencia MIT, por lo que puedes modificarlo y distribuirlo libremente.
-
-💪 Hecho con pasión por Nelson Landaeta.
+---
+⭐ Si este proyecto te fue útil, considera darle una estrella en GitHub.
