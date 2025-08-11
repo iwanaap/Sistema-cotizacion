@@ -19,6 +19,11 @@ __pycache__/
 .coverage
 htmlcov/
 
+# PDF files
+*.pdf
+static/pdfs/
+static/pdfs/ordenes_compra/
+
 # IDEs y editores
 .vscode/
 .idea/
