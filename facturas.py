@@ -164,9 +164,9 @@ def nueva_factura():
         condiciones_pago = request.form['condiciones_pago']
         numero_factura = request.form['numero_factura']
         
-        # Validar que el número de factura solo contenga dígitos
-        if not numero_factura.isdigit():
-            return "Error: El número de factura debe contener solo números", 400
+        # Ya no validamos el formato del número de factura
+        if not numero_factura:
+            return "Error: El número de factura no puede estar vacío", 400
             
         fecha = request.form['fecha']
         monto_total = float(request.form['monto_total'])
@@ -177,14 +177,14 @@ def nueva_factura():
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
         
-        # Validar que la cotización existe si se proporciona un número
+        # Validar que la cotización existe si se proporciona
         if numero_cotizacion:
             cursor.execute('SELECT numero_cotizacion FROM cotizaciones WHERE numero_cotizacion = ?', (numero_cotizacion,))
             if not cursor.fetchone():
                 conn.close()
                 return "Error: La cotización especificada no existe", 400
                 
-        # Validar que la orden de compra existe si se proporciona un número
+        # Validar que la orden de compra existe si se proporciona
         if numero_oc:
             cursor.execute('SELECT numero_oc FROM ordenes_compra WHERE numero_oc = ?', (numero_oc,))
             if not cursor.fetchone():

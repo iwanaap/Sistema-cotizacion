@@ -6,6 +6,7 @@
     <title>Crear Factura</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/facturas.js') }}"></script>
     <style>
         .cliente-suggestions {
             position: absolute;
@@ -151,11 +152,8 @@
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="monto_total" class="form-label">Monto Total</label>
-                            <div class="input-group">
-                                <span class="input-group-text">$</span>
-                                <input type="number" class="form-control" id="monto_total" name="monto_total" 
-                                       value="{{ factura[7] if factura else '' }}" required>
-                            </div>
+                            <input type="text" class="form-control money-input" id="monto_total" name="monto_total" 
+                                   value="{{ factura[7] if factura else '' }}" required>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -183,11 +181,7 @@
                         <div class="mb-3">
                             <label for="numero_cotizacion" class="form-label">N° Cotización</label>
                             <input type="text" class="form-control" id="numero_cotizacion" name="numero_cotizacion" 
-                                   pattern="^[0-9]*$" title="Por favor ingrese solo números"
                                    value="{{ factura[9] if factura else '' }}">
-                            <div class="invalid-feedback">
-                                Por favor ingrese un número de cotización válido.
-                            </div>
                         </div>
                     </div>
                     <div class="col-md-6">
@@ -209,120 +203,56 @@
         </div>
     </form>
 
-    <script>
-        // Formatear monto con separadores de miles
-        document.getElementById('monto_total').addEventListener('blur', function() {
-            if (this.value) {
-                this.value = parseInt(this.value).toLocaleString('es-CL');
-            }
-        });
+    <!-- Panel de Cotizaciones Relacionadas -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Cotizaciones Relacionadas</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>N° Cotización</th>
+                            <th>Empresa</th>
+                            <th>Fecha</th>
+                            <th>Monto Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cotizacionesRelacionadas">
+                        <!-- Aquí se cargarán dinámicamente las cotizaciones -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-        // Auto-completar información del cliente al seleccionar de la lista
-        document.getElementById('receptor').addEventListener('change', function() {
-            // Aquí puedes agregar la lógica para auto-completar el RUT cuando se selecciona un cliente
-            // Similar a como lo haces en el formulario de cotizaciones
-        });
-    </script>
-    <script>
-        $(document).ready(function() {
-            let typingTimer;
-            const doneTypingInterval = 300;  // esperar 300ms después de que el usuario deje de escribir
-            
-            $('#receptor').on('input', function() {
-                clearTimeout(typingTimer);
-                if ($(this).val()) {
-                    typingTimer = setTimeout(buscarClientes, doneTypingInterval);
-                } else {
-                    $('#clienteSuggestions').empty().hide();
-                }
-            });
+    <!-- Panel de Órdenes de Compra Relacionadas -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h5 class="card-title mb-0">Órdenes de Compra Relacionadas</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>N° OC</th>
+                            <th>Empresa</th>
+                            <th>Fecha</th>
+                            <th>Monto Total</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordenesCompraRelacionadas">
+                        <!-- Aquí se cargarán dinámicamente las órdenes de compra -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-            function buscarClientes() {
-                const nombre = $('#receptor').val();
-                
-                $.getJSON("{{ url_for('clientes.buscar_cliente') }}", { nombre: nombre })
-                    .done(function(clientes) {
-                        const suggestions = $('#clienteSuggestions');
-                        suggestions.empty();
-                        
-                        if (clientes.length > 0) {
-                            clientes.forEach(function(cliente) {
-                                const div = $('<div>')
-                                    .addClass('cliente-suggestion')
-                                    .text(cliente.nombre)
-                                    .data('cliente', cliente)
-                                    .click(function() {
-                                        const clienteData = $(this).data('cliente');
-                                        $('#receptor').val(clienteData.nombre);
-                                        $('#rut_receptor').val(clienteData.rut);
-                                        suggestions.hide();
-                                    });
-                                suggestions.append(div);
-                            });
-                            suggestions.show();
-                        } else {
-                            suggestions.hide();
-                        }
-                    });
-            }
-
-            // Cerrar sugerencias cuando se hace clic fuera
-            $(document).click(function(e) {
-                if (!$(e.target).closest('#receptor, #clienteSuggestions').length) {
-                    $('#clienteSuggestions').hide();
-                }
-            });
-
-            // Permitir escritura manual en caso de que no se encuentre el cliente
-            $('#rut_receptor').on('input', function() {
-                // No hacer nada, permitir la edición manual
-            });
-
-            // Validación del número de factura
-            $('#numero_factura').on('input', function() {
-                const value = $(this).val();
-                const isValid = /^[0-9]*$/.test(value);
-                
-                $(this).toggleClass('is-invalid', !isValid);
-                if (!isValid) {
-                    $(this).get(0).setCustomValidity('Por favor ingrese solo números');
-                } else {
-                    $(this).get(0).setCustomValidity('');
-                }
-            });
-
-            // Validación de números de cotización y OC
-            $('#numero_cotizacion, #numero_oc').on('input', function() {
-                const value = $(this).val();
-                // Permitir campo vacío o números
-                const isValid = value === '' || /^[0-9]*$/.test(value);
-                
-                $(this).toggleClass('is-invalid', !isValid);
-                if (!isValid) {
-                    $(this).get(0).setCustomValidity('Por favor ingrese solo números o deje el campo vacío');
-                } else {
-                    $(this).get(0).setCustomValidity('');
-                }
-            });
-
-            // Manejar el envío del formulario
-            $('form').on('submit', function(e) {
-                const cotizacionNum = $('#numero_cotizacion').val();
-                const ocNum = $('#numero_oc').val();
-                
-                if (cotizacionNum && !/^[0-9]+$/.test(cotizacionNum)) {
-                    e.preventDefault();
-                    $('#numero_cotizacion').addClass('is-invalid');
-                    return false;
-                }
-                
-                if (ocNum && !/^[0-9]+$/.test(ocNum)) {
-                    e.preventDefault();
-                    $('#numero_oc').addClass('is-invalid');
-                    return false;
-                }
-            });
-        });
-    </script>
+    <!-- El JavaScript se ha movido a /static/js/facturas.js -->
 </body>
 </html>

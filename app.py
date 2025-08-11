@@ -17,6 +17,59 @@ app.register_blueprint(editar_bp)
 app.register_blueprint(ordenes_compra_bp)
 app.register_blueprint(facturas_bp)
 
+@app.route('/buscar_cotizaciones')
+def buscar_cotizaciones():
+    cliente = request.args.get('cliente', '')
+    monto = request.args.get('monto', '')
+    
+    # Conectar a la base de datos
+    conn = sqlite3.connect('cotizaciones.db')
+    cursor = conn.cursor()
+    
+    # Construir la consulta base
+    query = """
+    SELECT id, numero_cotizacion, empresa, fecha, monto, 
+           ROUND(monto * 1.19) as monto_con_iva 
+    FROM cotizaciones 
+    WHERE 1=1
+    """
+    params = []
+    
+    # Agregar filtros si se proporcionan
+    if cliente:
+        query += " AND empresa LIKE ?"
+        params.append(f"%{cliente}%")
+    
+    if monto and monto.strip():
+        try:
+            monto_float = float(monto)
+            margen = monto_float * 0.10  # 10% de margen
+            query += " AND ROUND(monto * 1.19) BETWEEN ? AND ?"
+            params.extend([monto_float - margen, monto_float + margen])
+        except ValueError:
+            pass
+    
+    # Ordenar por fecha descendente y limitar a 10 resultados
+    query += " ORDER BY fecha DESC LIMIT 10"
+    
+    # Ejecutar la consulta
+    cursor.execute(query, params)
+    cotizaciones = cursor.fetchall()
+    
+    # Formatear los resultados
+    resultados = []
+    for cot in cotizaciones:
+        resultados.append({
+            'id': cot[0],
+            'numero': cot[1],
+            'empresa': cot[2],
+            'fecha': cot[3],
+            'monto_total': cot[5]  # Usamos el monto_con_iva calculado
+        })
+    
+    conn.close()
+    return jsonify(resultados)
+
 # Archivo de la base de datos
 DB_FILE = "cotizaciones.db"
 
@@ -37,7 +90,7 @@ def init_db():
             productos TEXT,
             monto REAL,
             creador TEXT,
-            numero_cotizacion INTEGER UNIQUE,
+            numero_cotizacion TEXT UNIQUE,
             datos_cotizacion TEXT,
             estado_cotizacion TEXT DEFAULT 'Pendiente',
             numero_oc TEXT,

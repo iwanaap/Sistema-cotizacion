@@ -11,7 +11,7 @@
 
     <h2 class="mb-3">Editar Cotización N° {{ cotizacion.numero_cotizacion }}</h2>
 
-    <form action="{{ url_for('editar.editar_cotizacion', id=cotizacion.id) }}" method="POST">
+    <form action="{{ url_for('editar.editar_cotizacion_por_numero', numero_cotizacion=cotizacion.numero_cotizacion) }}" method="POST">
         <!-- Encabezado con información de la empresa a la izquierda y cotización/fecha a la derecha -->
         <div class="row mb-4">
             <div class="col-md-6 text-end">
@@ -363,8 +363,34 @@
             });
         
             // Actualizar productos antes de enviar el formulario
-            $("form").on("submit", function () {
+            $("form").on("submit", function (e) {
+                e.preventDefault(); // Prevenir el envío por defecto
+                
+                // Actualizar productos y asegurarse de que los valores son válidos
                 actualizarProductosInput();
+                
+                // Verificar que los productos se han actualizado correctamente
+                const productos = JSON.parse($("#productosInput").val() || "[]");
+                if (productos.length === 0) {
+                    alert("Debe agregar al menos un producto a la cotización");
+                    return false;
+                }
+                
+                // Verificar que los valores numéricos son válidos
+                let hasInvalidValues = false;
+                productos.forEach(function(prod) {
+                    if (isNaN(prod.precio) || isNaN(prod.cantidad) || isNaN(prod.subtotal)) {
+                        hasInvalidValues = true;
+                    }
+                });
+                
+                if (hasInvalidValues) {
+                    alert("Hay valores numéricos inválidos en la tabla de productos");
+                    return false;
+                }
+                
+                // Si todo está bien, enviar el formulario
+                this.submit();
             });
         
             // Formatear valores iniciales al cargar la página

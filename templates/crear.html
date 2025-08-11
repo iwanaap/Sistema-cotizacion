@@ -259,24 +259,61 @@
 
     <script>
       $(document).ready(function () {
-          // Detecta cambios en el campo de contacto y busca los datos en la base de datos
-          $("#contacto").on("change", function () {
-              var contacto = $(this).val();
-              if (contacto) {
-                  $.get("/clientes/buscar_cliente", { contacto: contacto }, function (data) {
-                      if (data.error) {
-                          alert("Cliente no encontrado");
-                          $("#empresa, #rut, #telefono, #email").val("");
+          let typingTimer;
+          const doneTypingInterval = 300;  // esperar 300ms después de que el usuario deje de escribir
+          
+          // Función para buscar y rellenar datos del cliente
+          function buscarYRellenarCliente(nombre) {
+              $.getJSON("/clientes/buscar_cliente", { nombre: nombre })
+                  .done(function(clientes) {
+                      if (clientes.length > 0) {
+                          // Buscar coincidencia exacta
+                          var clienteExacto = clientes.find(c => c.nombre.toLowerCase() === nombre.toLowerCase());
+                          if (clienteExacto) {
+                              // Rellenar todos los campos con la información del cliente
+                              $('#empresa').val(clienteExacto.empresa || '');
+                              $('#rut').val(clienteExacto.rut || '');
+                              $('#telefono').val(clienteExacto.telefono || '');
+                              $('#email').val(clienteExacto.email || '');
+                          } else {
+                              // Limpiar campos si no hay coincidencia exacta
+                              $('#empresa, #rut, #telefono, #email').val('');
+                          }
+                          
+                          // Actualizar el datalist
+                          $('#listaContactos').empty();
+                          clientes.forEach(function(cliente) {
+                              $('#listaContactos').append($('<option>').val(cliente.nombre));
+                          });
                       } else {
-                          $("#empresa").val(data.empresa);
-                          $("#rut").val(data.rut);
-                          $("#telefono").val(data.telefono);
-                          $("#email").val(data.email);
+                          // Limpiar campos si no se encontraron clientes
+                          $('#empresa, #rut, #telefono, #email').val('');
+                          $('#listaContactos').empty();
                       }
-                  }).fail(function() {
-                      alert("Error al buscar cliente");
-                      $("#empresa, #rut, #telefono, #email").val("");
+                  })
+                  .fail(function() {
+                      console.error("Error al buscar cliente");
+                      $('#empresa, #rut, #telefono, #email').val('');
                   });
+          }
+
+          // Evento al escribir en el campo de contacto
+          $('#contacto').on('input', function() {
+              clearTimeout(typingTimer);
+              const nombre = $(this).val();
+              if (nombre) {
+                  typingTimer = setTimeout(() => buscarYRellenarCliente(nombre), doneTypingInterval);
+              } else {
+                  $('#empresa, #rut, #telefono, #email').val('');
+                  $('#listaContactos').empty();
+              }
+          });
+
+          // Evento cuando se selecciona una opción del datalist
+          $('#contacto').on('change', function() {
+              const nombre = $(this).val();
+              if (nombre) {
+                  buscarYRellenarCliente(nombre);
               }
           });
       });

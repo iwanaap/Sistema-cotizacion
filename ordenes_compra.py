@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, render_template, request, redirect, url_for, jsonify
 import sqlite3
 from datetime import datetime
 import json
@@ -37,6 +37,50 @@ def init_db():
     conn.close()
 
 init_db()
+
+@ordenes_compra_bp.route('/buscar_ordenes_compra')
+def buscar_ordenes_compra():
+    empresa = request.args.get('empresa', '')
+    monto = request.args.get('monto', '')
+    
+    conn = sqlite3.connect(DB_FILE)
+    cursor = conn.cursor()
+    
+    query = """
+    SELECT numero_oc, cliente as empresa, fecha, monto_total
+    FROM ordenes_compra 
+    WHERE 1=1
+    """
+    params = []
+    
+    if empresa:
+        query += " AND cliente LIKE ?"
+        params.append(f"%{empresa}%")
+    
+    if monto and monto.strip():
+        try:
+            monto_float = float(monto)
+            margen = monto_float * 0.10  # 10% de margen
+            query += " AND monto_total BETWEEN ? AND ?"
+            params.extend([monto_float - margen, monto_float + margen])
+        except ValueError:
+            pass
+    
+    cursor.execute(query, params)
+    ordenes = cursor.fetchall()
+    conn.close()
+    
+    # Convertir los resultados a una lista de diccionarios
+    ordenes_list = []
+    for orden in ordenes:
+        ordenes_list.append({
+            'numero_oc': orden[0],
+            'empresa': orden[1],
+            'fecha': orden[2],
+            'monto_total': orden[3]
+        })
+    
+    return jsonify(ordenes_list)
 
 @ordenes_compra_bp.route('/ordenes_compra', methods=['GET', 'POST'])
 def lista_ordenes():
@@ -171,6 +215,7 @@ def nueva_orden():
         estado_pago = request.form['estado_pago']
         numero_cotizacion = request.form.get('numero_cotizacion', '')
         
+        # No necesitamos validar el formato del número de cotización
         # Manejo del archivo PDF
         pdf_file = request.files.get('pdf_documento')
         pdf_path = ''
