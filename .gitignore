@@ -48,3 +48,9 @@ instance/
 *.tmp
 *.bak
 *.swp
+
+# Archivos img
+*.jpg
+*.jpeg
+*.png
+*.gif
