@@ -1,10 +1,45 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 import sqlite3
 import json
+import os
+from werkzeug.utils import secure_filename
+import uuid
 
 editar_bp = Blueprint('editar', __name__, url_prefix='/editar')
 
 DB_FILE = "cotizaciones.db"
+UPLOAD_FOLDER = os.path.join('static', 'img', 'productos')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_product_image(file):
+    if file and file.filename and allowed_file(file.filename):
+        try:
+            # Asegurarse de que el directorio existe
+            if not os.path.exists(UPLOAD_FOLDER):
+                os.makedirs(UPLOAD_FOLDER)
+            
+            # Generar nombre único para el archivo
+            filename = secure_filename(file.filename)
+            unique_filename = f"{str(uuid.uuid4())}_{filename}"
+            file_path = os.path.join(UPLOAD_FOLDER, unique_filename)
+            
+            # Guardar el archivo
+            file.save(file_path)
+            
+            # Verificar que el archivo se guardó correctamente
+            if os.path.exists(file_path):
+                print(f"Imagen guardada exitosamente: {file_path}")
+                return unique_filename
+            else:
+                print(f"Error: El archivo no se guardó correctamente en {file_path}")
+                return None
+        except Exception as e:
+            print(f"Error al guardar la imagen: {str(e)}")
+            return None
+    return None
 
 # Ruta para editar una cotización por ID (mantener por compatibilidad)
 @editar_bp.route('/<string:id>', methods=['GET', 'POST'])
@@ -48,6 +83,71 @@ def editar_cotizacion_por_numero(numero_cotizacion):
             email = request.form['email']
             fechaCotizacion = request.form['fechaCotizacion']
             productos_json = request.form['productos']
+            
+            # Procesar las imágenes de los productos
+            try:
+                productos = json.loads(productos_json)
+                print("\nProcesando productos y sus imágenes...")
+                for i, producto in enumerate(productos):
+                    print(f"\nProcesando producto {i}: {producto.get('producto', 'Sin nombre')}")
+                    
+                    # 1. Verificar si hay una nueva imagen en el request
+                    file_key = f'producto_imagen_{i}'
+                    nueva_imagen = request.files.get(file_key)
+                    
+                    # 2. Obtener la imagen actual del producto
+                    imagen_actual = producto.get('imagen', '')
+                    print(f"Imagen actual: {imagen_actual}")
+                    
+                    # 3. Procesar según el caso
+                    if nueva_imagen and nueva_imagen.filename:
+                        print(f"Procesando nueva imagen: {nueva_imagen.filename}")
+                        # Guardar nueva imagen
+                        filename = save_product_image(nueva_imagen)
+                        if filename:
+                            print(f"Nueva imagen guardada como: {filename}")
+                            # Eliminar imagen anterior si existe
+                            if imagen_actual:
+                                old_path = os.path.join(UPLOAD_FOLDER, imagen_actual)
+                                if os.path.exists(old_path):
+                                    try:
+                                        os.remove(old_path)
+                                        print(f"Imagen anterior eliminada: {imagen_actual}")
+                                    except Exception as e:
+                                        print(f"Error al eliminar imagen anterior: {str(e)}")
+                            producto['imagen'] = filename
+                        else:
+                            print("Error al guardar la nueva imagen")
+                            producto['imagen'] = imagen_actual  # Mantener la imagen actual si falla
+                    
+                    elif f'imagen_eliminada_{i}' in request.form:
+                        print(f"Eliminando imagen actual: {imagen_actual}")
+                        if imagen_actual:
+                            old_path = os.path.join(UPLOAD_FOLDER, imagen_actual)
+                            if os.path.exists(old_path):
+                                try:
+                                    os.remove(old_path)
+                                    print("Imagen eliminada del sistema de archivos")
+                                except Exception as e:
+                                    print(f"Error al eliminar archivo: {str(e)}")
+                        producto['imagen'] = ''
+                    
+                    elif not imagen_actual:
+                        print("No hay imagen para este producto")
+                        producto['imagen'] = ''
+                    
+                    else:
+                        print(f"Manteniendo imagen actual: {imagen_actual}")
+                        # Verificar que la imagen existe
+                        img_path = os.path.join(UPLOAD_FOLDER, imagen_actual)
+                        if not os.path.exists(img_path):
+                            print(f"Advertencia: Archivo de imagen no encontrado en: {img_path}")
+                            producto['imagen'] = ''
+                
+                print("\nProcesamiento de imágenes completado")
+                productos_json = json.dumps(productos)
+            except Exception as e:
+                print(f"Error procesando imágenes: {str(e)}")
             
             # Capturar los campos adicionales del formulario
             plazo_entrega = request.form.get('plazo_entrega', '')

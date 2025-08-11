@@ -8,10 +8,29 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body class="container mt-4">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container-fluid">
+            <ul class="navbar-nav">
+                <li class="nav-item">
+                  <a class="nav-link" href="/">Cotizaciones</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('ordenes_compra.lista_ordenes') }}">Órdenes de Compra</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link active" href="{{ url_for('facturas.lista_facturas') }}">Facturas</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('clientes.gestionar_clientes') }}">Clientes</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
     
     <h2 class="mb-3">Crear Cotización</h2>
 
-    <form action="/crear" method="POST">
+    <form action="/crear" method="POST" enctype="multipart/form-data">
 
         <!-- Número de Cotización -->
         <div class="mb-3">
@@ -66,6 +85,7 @@
             <table class="table" id="productosTable">
                 <thead>
                     <tr>
+                        <th>Imagen</th>
                         <th>Producto</th>
                         <th>Cantidad</th>
                         <th>Formato</th>
@@ -174,6 +194,9 @@
         
                     $(this).find(".subtotal").text(formatMoney(subtotal)); // Mostrar subtotal con formato
         
+                    const imgInput = $(this).find(".producto-imagen")[0];
+                    const imagen = imgInput.files[0];
+                    
                     productos.push({
                         producto: producto,
                         cantidad: cantidad,
@@ -182,7 +205,8 @@
                         subtotal: subtotal,
                         costo: costo,
                         subtotalCosto: subtotalCosto,
-                        link: link
+                        link: link,
+                        imagen: imagen ? imgInput.files[0].name : ''
                     });
                 });
         
@@ -208,6 +232,12 @@
             $("#agregarProducto").click(function () {
                 var nuevaFila = `
                     <tr>
+                        <td>
+                            <div class="image-upload">
+                                <input type="file" class="form-control producto-imagen" accept="image/*">
+                                <img class="imagen-preview" src="#" style="max-width: 100px; max-height: 100px; display: none;">
+                            </div>
+                        </td>
                         <td><input type="text" class="form-control producto" required></td>
                         <td><input type="number" class="form-control cantidad" required></td>
                         <td><input type="text" class="form-control formato"></td>
@@ -220,6 +250,24 @@
                 $("#productosTable tbody").append(nuevaFila);
             });
         
+            // Manejar la previsualización de imágenes
+            $("#productosTable").on("change", ".producto-imagen", function(e) {
+                const file = e.target.files[0];
+                const imgPreview = $(this).siblings('.imagen-preview');
+                
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imgPreview.attr('src', e.target.result);
+                        imgPreview.show();
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    imgPreview.attr('src', '#');
+                    imgPreview.hide();
+                }
+            });
+
             // Evento para eliminar una fila
             $("#productosTable").on("click", ".eliminarProducto", function () {
                 $(this).closest("tr").remove();
@@ -248,8 +296,35 @@
             });
         
             // Actualizar productos antes de enviar el formulario
-            $("form").on("submit", function () {
+            $("form").on("submit", function (e) {
+                e.preventDefault();
                 actualizarProductosInput();
+                
+                // Crear un FormData para enviar el formulario con archivos
+                var formData = new FormData(this);
+                
+                // Agregar cada archivo de imagen al FormData
+                $("#productosTable tbody tr").each(function(index) {
+                    var fileInput = $(this).find(".producto-imagen")[0];
+                    if (fileInput && fileInput.files[0]) {
+                        formData.append('producto_imagen_' + index, fileInput.files[0]);
+                    }
+                });
+                
+                // Enviar el formulario con AJAX
+                $.ajax({
+                    url: $(this).attr('action'),
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        window.location.href = '/';
+                    },
+                    error: function(xhr, status, error) {
+                        alert('Error al guardar la cotización: ' + error);
+                    }
+                });
             });
         
         });

@@ -4,12 +4,37 @@ from datetime import datetime
 import json
 import pdfkit
 import os
+from werkzeug.utils import secure_filename
+import uuid
 from clientes import clientes_bp  # Importar el Blueprint de clientes
 from editar import editar_bp  # Importar el Blueprint de edición
 from ordenes_compra import ordenes_compra_bp  # Importar el Blueprint de órdenes de compra
 from facturas import facturas_bp  # Importar el Blueprint de facturas
 
 app = Flask(__name__)
+
+# Configuración para subida de archivos
+UPLOAD_FOLDER = os.path.join('static', 'img', 'productos')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+
+# Asegurarse de que el directorio de carga existe
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max-limit
+
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def save_product_image(file):
+    if file and allowed_file(file.filename):
+        # Generar un nombre único para el archivo
+        filename = secure_filename(file.filename)
+        unique_filename = f"{str(uuid.uuid4())}_{filename}"
+        file.save(os.path.join(app.config['UPLOAD_FOLDER'], unique_filename))
+        return unique_filename
+    return None
 
 # Registrar los Blueprints
 app.register_blueprint(clientes_bp)
@@ -237,13 +262,15 @@ def generar_pdf(id):
     }
 
     # Renderizar el template a HTML
-    rendered = render_template("pdf.html", cotizacion=cotizacion_dict)
+    rendered = render_template("pdf.html", cotizacion=cotizacion_dict, os=os, request=request)
 
     # Configurar la ruta de wkhtmltopdf
     config = pdfkit.configuration(wkhtmltopdf='/usr/bin/wkhtmltopdf')
 
     # Opciones para permitir acceso a archivos locales
-    options = {'enable-local-file-access': ''}
+    options = {
+        'enable-local-file-access': None
+    }
 
     # Convertir el HTML a PDF usando pdfkit
     pdf = pdfkit.from_string(rendered, False, configuration=config, options=options)
@@ -295,9 +322,18 @@ def crear():
         plazo_entrega = request.form['plazo_entrega']
         forma_pago = request.form['forma_pago']
 
-        # Capturar y procesar los productos
+        # Capturar y procesar los productos e imágenes
         try:
             productos = json.loads(request.form['productos'])  # Convertir JSON string a lista
+            
+            # Procesar las imágenes
+            for i, producto in enumerate(productos):
+                if f'producto_imagen_{i}' in request.files:
+                    file = request.files[f'producto_imagen_{i}']
+                    if file:
+                        filename = save_product_image(file)
+                        if filename:
+                            producto['imagen'] = filename
         except Exception:
             productos = []
 

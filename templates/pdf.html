@@ -18,10 +18,11 @@
       margin-bottom: 20px;
     }
     /* Opcional: estilos para forzar anchos fijos en la tabla */
-    .col-producto { width: 40%; }
+    .col-producto { width: 35%; }
     .col-cantidad { width: 10%; }
-    .col-formato { width: 20%; }
+    .col-formato { width: 10%; }
     .col-precio, .col-subtotal { width: 15%; }
+    .col-img { width: 20%; }
   </style>
 </head>
 <body class="container">
@@ -87,6 +88,7 @@
     <table class="table table-bordered">
       <thead>
         <tr>
+          <th>Imagen</th>
           <th class="col-producto">Producto</th>
           <th class="col-cantidad">Cantidad</th>
           <th class="col-formato">Formato</th>
@@ -97,6 +99,11 @@
       <tbody>
         {% for producto in cotizacion.productos %}
         <tr>
+          <td class="col-img" style="width: 100px; text-align: center;">
+            {% if producto.imagen %}
+              <img src="file:///{{ os.path.abspath(os.path.join('static', 'img', 'productos', producto.imagen)) }}" alt="Imagen del producto" style="max-width: 80px; max-height: 80px;">
+            {% endif %}
+          </td>
           <td class="col-producto">{{ producto.producto }}</td>
           <td class="col-cantidad">{{ producto.cantidad }}</td>
           <td class="col-formato">{{ producto.formato }}</td>
