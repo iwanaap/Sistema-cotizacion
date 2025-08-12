@@ -52,5 +52,21 @@ instance/
 # Archivos img
 *.jpg
 *.jpeg
+*.JPG
+*.JPEG
 *.png
+*.PNG
 *.gif
+*.GIF
+*.bmp
+*.BMP
+*.tiff
+*.TIFF
+*.tif
+*.TIF
+*.ico
+*.ICO
+*.svg
+*.SVG
+*.webp
+*.WEBP
