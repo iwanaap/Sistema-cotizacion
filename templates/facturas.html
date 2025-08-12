@@ -33,25 +33,24 @@
       padding: 0.5rem;
     }
     /* Ajustes de ancho para columnas específicas */
-    .table th:nth-child(1) { width: 7%; }  /* N° Factura */
-    .table th:nth-child(2) { width: 7%; }  /* Fecha */
+    .table th:nth-child(1) { width: 4%; }  /* N° Factura */
+    .table th:nth-child(2) { width: 8%; }  /* Fecha */
     .table th:nth-child(3) { width: 9%; }  /* RUT */
     .table th:nth-child(4) { width: 13%; } /* Receptor */
     .table th:nth-child(5) { width: 7%; }  /* Tipo Doc */
     .table th:nth-child(6) { width: 7%; }  /* Condiciones */
-    .table th:nth-child(7) { width: 15%; } /* Fecha Venc */
+    .table th:nth-child(7) { width: 10%; } /* Fecha Venc */
     .table th:nth-child(8) { width: 8%; }  /* Monto */
     .table th:nth-child(9) { width: 8%; }  /* Estado */
-    .table th:nth-child(10) { width: 6%; } /* N° Cotización */
-    .table th:nth-child(11) { width: 5%; } /* N° OC */
-    .table th:nth-child(12) { width: 8%; } /* Acciones */
+    .table th:nth-child(10) { width: 7%; } /* N° Cotización */
+    .table th:nth-child(11) { width: 9%; } /* N° OC */
+    .table th:nth-child(12) { width: 12%; } /* Acciones */
     
     /* Manejo de texto largo */
     .table td {
       max-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      word-wrap: break-word;
+      white-space: normal;
     }
     /* Hacer que los botones de acción sean más compactos */
     .table .btn-sm {
