@@ -5,6 +5,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Órdenes de Compra</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+  <style>
+    /* Estilos para la tabla compacta */
+    .table {
+      font-size: 0.9rem;
+      width: 100%;
+    }
+    .table th, .table td {
+      padding: 0.5rem;
+    }
+
+    /* Ajustes de ancho para columnas específicas */
+    .table th:nth-child(1) { width: 8%; }  /* N° OC */
+    .table th:nth-child(2) { width: 15%; } /* Cliente */
+    .table th:nth-child(3) { width: 8%; }  /* Fecha */
+    .table th:nth-child(4) { width: 12%; } /* Contacto */
+    .table th:nth-child(5) { width: 10%; } /* Monto Total */
+    .table th:nth-child(6) { width: 7%; }  /* Facturado */
+    .table th:nth-child(7) { width: 8%; }  /* N° Factura */
+    .table th:nth-child(8) { width: 10%; } /* Estado de Pago */
+    .table th:nth-child(9) { width: 8%; }  /* N° Cotización */
+    .table th:nth-child(10) { width: 14%; } /* Acciones */
+
+    /* Manejo de texto largo */
+    .table td {
+      max-width: 0;
+      word-wrap: break-word;
+      white-space: normal;
+    }
+
+    /* Hacer que los botones de acción sean más compactos */
+    .table .btn-sm {
+      padding: 0.2rem 0.4rem;
+      font-size: 0.8rem;
+    }
+
+    /* Estilos para el formulario de búsqueda */
+    .search-form {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .search-form .form-control {
+      max-width: 300px;
+    }
+  </style>
 </head>
 <body class="container mt-4">
 
@@ -30,11 +76,30 @@
   <h2 class="mb-3">Listado de Órdenes de Compra</h2>
   <a href="{{ url_for('ordenes_compra.nueva_orden') }}" class="btn btn-primary mb-3">Nueva Orden de Compra</a>
   
-  <form method="POST" action="{{ url_for('ordenes_compra.lista_ordenes') }}">
-    <input type="text" name="search" class="form-control" placeholder="Buscar orden de compra..." value="{{ search_query if search_query }}">
-    <button type="submit" class="btn btn-primary mt-2">Buscar</button>
+  <!-- Formulario para la búsqueda -->
+  <form method="POST" action="{{ url_for('ordenes_compra.lista_ordenes') }}" class="mb-3">
+    <div class="input-group">
+      <input 
+        type="text" 
+        name="search" 
+        class="form-control" 
+        placeholder="Buscar por N° OC, cliente, contacto..." 
+        value="{{ search_query if search_query }}"
+        autocomplete="off">
+      <div class="input-group-append">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-search"></i> Buscar
+        </button>
+        {% if search_query %}
+          <a href="{{ url_for('ordenes_compra.lista_ordenes') }}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Limpiar
+          </a>
+        {% endif %}
+      </div>
+    </div>
   </form>
 
+<div style="width: 100%; margin: 0 auto;">  
   <table class="table table-striped mt-4">
     <thead>
       <tr>
@@ -74,6 +139,6 @@
       {% endfor %}
     </tbody>
   </table>
-
+</div>
 </body>
 </html>
