@@ -60,9 +60,8 @@ def buscar_ordenes_compra():
     if monto and monto.strip():
         try:
             monto_float = float(monto)
-            margen = monto_float * 0.10  # 10% de margen
-            query += " AND monto_total BETWEEN ? AND ?"
-            params.extend([monto_float - margen, monto_float + margen])
+            query += " AND monto_total = ?"
+            params.append(monto_float)
         except ValueError:
             pass
     

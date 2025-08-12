@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Facturas</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="container mt-4">
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Cotizaciones</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('ordenes_compra.lista_ordenes') }}">Órdenes de Compra</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="{{ url_for('facturas.lista_facturas') }}">Facturas</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('clientes.gestionar_clientes') }}">Clientes</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <h2 class="mb-3">Listado de Facturas</h2>
+  <a href="{{ url_for('facturas.nueva_factura') }}" class="btn btn-primary mb-3">Nueva Factura</a>
+  
+  <form method="POST" action="{{ url_for('facturas.lista_facturas') }}">
+    <input type="text" name="search" class="form-control" placeholder="Buscar factura..." value="{{ search_query if search_query }}">
+    <button type="submit" class="btn btn-primary mt-2">Buscar</button>
+  </form>
+
+  <table class="table table-striped mt-4">
+    <thead>
+      <tr>
+        <th>N° Factura</th>
+        <th>Fecha</th>
+        <th>RUT Receptor</th>
+        <th>Receptor</th>
+        <th>Tipo Documento</th>
+        <th>Condiciones de Pago</th>
+        <th>Fecha Vencimiento</th>
+        <th>Monto Total</th>
+        <th>Estado de Pago</th>
+        <th>N° Cotización</th>
+        <th>N° OC</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for factura in facturas %}
+      <tr>
+        <td><a href="{{ url_for('facturas.editar_factura_por_numero', numero_factura=factura[5]) }}" class="text-primary">{{ factura[5] }}</a></td>
+        <td>{{ factura[6] }}</td>
+        <td>{{ factura[1] }}</td>
+        <td>{{ factura[2] }}</td>
+        <td>{{ factura[3] }}</td>
+        <td>{{ factura[4] }}</td>
+        <td>
+          {% if factura[4] == "30 días" %}
+            {% set fecha_vencimiento = factura[11] %}
+            {% if fecha_vencimiento %}
+              {{ fecha_vencimiento }}
+              {% if fecha_vencimiento < today %}
+                <span class="badge bg-danger">Vencida</span>
+              {% endif %}
+            {% endif %}
+          {% else %}
+            -
+          {% endif %}
+        </td>
+        <td>${{ "{:,.0f}".format(factura[7]).replace(',', '.') }}</td>
+        <td>{{ factura[8] }}</td>
+        <td>{% if factura[9] %}<a href="{{ url_for('editar.editar_cotizacion_por_numero', numero_cotizacion=factura[9]) }}" class="text-primary">{{ factura[9] }}</a>{% else %}-{% endif %}</td>
+        <td>{% if factura[10] %}<a href="{{ url_for('ordenes_compra.editar_orden_por_numero', numero_oc=factura[10]) }}" class="text-primary">{{ factura[10] }}</a>{% else %}-{% endif %}</td>
+        <td>
+          <a href="{{ url_for('facturas.editar_factura_por_numero', numero_factura=factura[5]) }}" class="btn btn-warning btn-sm">Editar</a>
+          <a href="{{ url_for('facturas.eliminar_factura_por_numero', numero_factura=factura[5]) }}" class="btn btn-danger btn-sm" 
+             onclick="return confirm('¿Seguro que deseas eliminar esta factura?');">Eliminar</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+</body>
+</html>

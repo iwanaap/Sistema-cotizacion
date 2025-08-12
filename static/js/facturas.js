@@ -1,3 +1,50 @@
+// Función para ordenar tabla por fecha
+function sortTableByDate() {
+    console.log('Función sortTableByDate llamada');
+    
+    const table = document.querySelector('table');
+    console.log('Tabla encontrada:', table);
+    
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    console.log('Filas encontradas:', rows.length);
+    
+    const dateColumn = 1; // La columna de fecha es la segunda (índice 1)
+    const isAscending = table.getAttribute('data-sort') !== 'desc';  // Cambiado la lógica
+    console.log('Orden actual:', isAscending ? 'ascendente' : 'descendente');
+
+    // Actualizar el atributo de ordenamiento
+    table.setAttribute('data-sort', isAscending ? 'desc' : 'asc');
+
+    // Actualizar el ícono
+    const dateHeader = document.getElementById('dateHeader');
+    console.log('Header de fecha encontrado:', dateHeader);
+    const icon = dateHeader.querySelector('i');
+    console.log('Ícono encontrado:', icon);
+    icon.className = `bi bi-sort-${isAscending ? 'down' : 'up'}`;
+
+    rows.sort((rowA, rowB) => {
+        const dateTextA = rowA.cells[dateColumn].textContent.trim();
+        const dateTextB = rowB.cells[dateColumn].textContent.trim();
+        console.log('Comparando fechas:', dateTextA, dateTextB);
+        
+        // Convertir fecha de formato DD-MM-YYYY a objeto Date
+        const [dayA, monthA, yearA] = dateTextA.split('-');
+        const [dayB, monthB, yearB] = dateTextB.split('-');
+        
+        const dateA = new Date(yearA, monthA - 1, dayA);
+        const dateB = new Date(yearB, monthB - 1, dayB);
+        
+        console.log('Fechas convertidas:', dateA, dateB);
+        
+        return isAscending ? dateA - dateB : dateB - dateA;
+    });
+
+    // Limpiar y reinsertarar las filas ordenadas
+    const tbody = table.querySelector('tbody');
+    tbody.innerHTML = '';
+    rows.forEach(row => tbody.appendChild(row));
+}
+
 // Funciones de utilidad
 function formatMoney(value) {
     if (!value && value !== 0) return '';
@@ -30,11 +77,10 @@ function seleccionarOrdenCompra(numeroOC) {
 
 // Funciones de búsqueda para cotizaciones Relacionadas
 function buscarCotizacionesRelacionadas() {
-    const cliente = $('#receptor').val().trim();
     const montoTotal = cleanMoney($('#monto_total').val());
     
-    if (!cliente && !montoTotal) {
-        $('#cotizacionesRelacionadas').html('<tr><td colspan="5" class="text-center">Ingrese el cliente o monto para buscar cotizaciones relacionadas</td></tr>');
+    if (!montoTotal) {
+        $('#cotizacionesRelacionadas').html('<tr><td colspan="5" class="text-center">Ingrese el monto para buscar cotizaciones relacionadas</td></tr>');
         return;
     }
 
@@ -42,7 +88,6 @@ function buscarCotizacionesRelacionadas() {
     tbody.html('<tr><td colspan="5" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></td></tr>');
 
     const params = new URLSearchParams({
-        empresa: cliente,
         monto: montoTotal
     });
 
@@ -84,11 +129,10 @@ function buscarCotizacionesRelacionadas() {
 
 // Funciones de búsqueda para Ordenes Compra Relacionadas
 function buscarOrdenesCompraRelacionadas() {
-    const empresa = $('#receptor').val().trim();
     const montoTotal = cleanMoney($('#monto_total').val());
     
-    if (!empresa && !montoTotal) {
-        $('#ordenesCompraRelacionadas').html('<tr><td colspan="5" class="text-center">Ingrese el cliente o monto para buscar órdenes de compra relacionadas</td></tr>');
+    if (!montoTotal) {
+        $('#ordenesCompraRelacionadas').html('<tr><td colspan="5" class="text-center">Ingrese el monto para buscar órdenes de compra relacionadas</td></tr>');
         return;
     }
 
@@ -96,10 +140,9 @@ function buscarOrdenesCompraRelacionadas() {
     tbody.html('<tr><td colspan="5" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Cargando...</span></div></td></tr>');
 
     // Log para depuración
-    console.log('Buscando órdenes de compra con:', { empresa, monto: montoTotal });
+    console.log('Buscando órdenes de compra con monto:', montoTotal);
 
     const params = new URLSearchParams({
-        empresa: empresa,
         monto: montoTotal
     });
 
@@ -126,6 +169,8 @@ function buscarOrdenesCompraRelacionadas() {
                 const clienteNombre = oc.empresa || oc.cliente || '';
                 const fecha = oc.fecha ? new Date(oc.fecha).toLocaleDateString('es-CL') : '';
                 const monto = oc.monto_total || oc.monto || 0;
+                const montoIngresado = parseInt(cleanMoney($('#monto_total').val()));
+                const esMontoCorrecto = parseInt(monto) === montoIngresado;
 
                 console.log('Procesando orden:', { numeroOC, clienteNombre, fecha, monto }); // Log para depuración
 
@@ -134,7 +179,8 @@ function buscarOrdenesCompraRelacionadas() {
                     <td>${numeroOC}</td>
                     <td>${clienteNombre}</td>
                     <td>${fecha}</td>
-                    <td>$${formatMoney(monto)}</td>
+                    <td class="${esMontoCorrecto ? 'text-success fw-bold' : ''}">${formatMoney(monto)}
+                        ${esMontoCorrecto ? '<i class="bi bi-check-circle-fill"></i>' : ''}</td>
                     <td>
                         <button class="btn btn-sm btn-primary" onclick="seleccionarOrdenCompra('${numeroOC}')">
                             Seleccionar

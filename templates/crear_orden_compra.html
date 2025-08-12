@@ -119,7 +119,7 @@
                         <div class="mb-3">
                             <label for="estado_pago" class="form-label">Estado de Pago</label>
                             <select class="form-control" id="estado_pago" name="estado_pago" required>
-                                <option value="Pendiente" {% if orden and orden[8] == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="Impago" {% if orden and orden[8] == 'Impago' %}selected{% endif %}>Impago</option>
                                 <option value="Pagado" {% if orden and orden[8] == 'Pagado' %}selected{% endif %}>Pagado</option>
                                 <option value="Parcial" {% if orden and orden[8] == 'Parcial' %}selected{% endif %}>Pago Parcial</option>
                             </select>

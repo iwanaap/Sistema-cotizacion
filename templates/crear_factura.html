@@ -7,6 +7,26 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script src="{{ url_for('static', filename='js/facturas.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Aplicar formato inicial al campo de monto total
+            const montoInput = document.getElementById('monto_total');
+            montoInput.addEventListener('input', function(e) {
+                const value = this.value.replace(/\./g, '').replace(/\$/g, '').trim();
+                if (value) {
+                    this.value = formatMoney(value);
+                    // Buscar órdenes de compra cuando cambia el monto
+                    buscarOrdenesCompraRelacionadas();
+                }
+            });
+
+            // Antes de enviar el formulario, limpiar el formato
+            document.querySelector('form').addEventListener('submit', function(e) {
+                const montoInput = document.getElementById('monto_total');
+                montoInput.value = cleanMoney(montoInput.value);
+            });
+        });
+    </script>
     <style>
         .cliente-suggestions {
             position: absolute;
@@ -89,9 +109,7 @@
                             <label for="tipo_documento" class="form-label">Tipo Documento</label>
                             <select class="form-control" id="tipo_documento" name="tipo_documento" required>
                                 <option value="Factura" {% if factura and factura[3] == 'Factura' %}selected{% endif %}>Factura</option>
-                                <option value="Factura Electrónica" {% if factura and factura[3] == 'Factura Electrónica' %}selected{% endif %}>Factura Electrónica</option>
-                                <option value="Boleta" {% if factura and factura[3] == 'Boleta' %}selected{% endif %}>Boleta</option>
-                                <option value="Boleta Electrónica" {% if factura and factura[3] == 'Boleta Electrónica' %}selected{% endif %}>Boleta Electrónica</option>
+                                <option value="Nota de Crédito" {% if factura and factura[3] == 'Nota de Crédito' %}selected{% endif %}>Nota de Crédito</option>
                             </select>
                         </div>
                     </div>
@@ -101,8 +119,6 @@
                             <select class="form-control" id="condiciones_pago" name="condiciones_pago" required>
                                 <option value="Contado" {% if factura and factura[4] == 'Contado' %}selected{% endif %}>Contado</option>
                                 <option value="30 días" {% if factura and factura[4] == '30 días' %}selected{% endif %}>30 días</option>
-                                <option value="60 días" {% if factura and factura[4] == '60 días' %}selected{% endif %}>60 días</option>
-                                <option value="90 días" {% if factura and factura[4] == '90 días' %}selected{% endif %}>90 días</option>
                             </select>
                         </div>
                     </div>
@@ -153,17 +169,23 @@
                         <div class="mb-3">
                             <label for="monto_total" class="form-label">Monto Total</label>
                             <input type="text" class="form-control money-input" id="monto_total" name="monto_total" 
-                                   value="{{ factura[7] if factura else '' }}" required>
+                                   value="{{ '{:,.0f}'.format(factura[7]).replace(',', '.') if factura else '' }}" required>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="mb-3">
                             <label for="estado_pago" class="form-label">Estado de Pago</label>
                             <select class="form-control" id="estado_pago" name="estado_pago" required>
-                                <option value="Pendiente" {% if factura and factura[8] == 'Pendiente' %}selected{% endif %}>Pendiente</option>
+                                <option value="Impago" {% if factura and factura[8] == 'Impago' %}selected{% endif %}>Impago</option>
                                 <option value="Pagado" {% if factura and factura[8] == 'Pagado' %}selected{% endif %}>Pagado</option>
                                 <option value="Parcial" {% if factura and factura[8] == 'Parcial' %}selected{% endif %}>Pago Parcial</option>
                             </select>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <label for="observaciones" class="form-label">Observaciones</label>
+                            <textarea class="form-control" id="observaciones" name="observaciones" rows="4" style="resize: vertical;">{{ factura[11] if factura else '' }}</textarea>
                         </div>
                     </div>
                 </div>

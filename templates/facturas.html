@@ -5,6 +5,60 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Facturas</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+  <style>
+    .sortable {
+      cursor: pointer;
+    }
+    .sortable:hover {
+      background-color: rgba(0,0,0,0.05);
+    }
+    .due-date {
+      font-weight: 500;
+    }
+    .overdue {
+      color: #dc3545;
+      font-weight: bold;
+    }
+    .days-remaining {
+      font-size: 0.85em;
+      margin-left: 5px;
+    }
+    /* Estilos para la tabla compacta */
+    .table {
+      font-size: 0.9rem;
+      width: 100%;
+    }
+    .table th, .table td {
+      padding: 0.5rem;
+    }
+    /* Ajustes de ancho para columnas específicas */
+    .table th:nth-child(1) { width: 7%; }  /* N° Factura */
+    .table th:nth-child(2) { width: 7%; }  /* Fecha */
+    .table th:nth-child(3) { width: 9%; }  /* RUT */
+    .table th:nth-child(4) { width: 13%; } /* Receptor */
+    .table th:nth-child(5) { width: 7%; }  /* Tipo Doc */
+    .table th:nth-child(6) { width: 7%; }  /* Condiciones */
+    .table th:nth-child(7) { width: 15%; } /* Fecha Venc */
+    .table th:nth-child(8) { width: 8%; }  /* Monto */
+    .table th:nth-child(9) { width: 8%; }  /* Estado */
+    .table th:nth-child(10) { width: 6%; } /* N° Cotización */
+    .table th:nth-child(11) { width: 5%; } /* N° OC */
+    .table th:nth-child(12) { width: 8%; } /* Acciones */
+    
+    /* Manejo de texto largo */
+    .table td {
+      max-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* Hacer que los botones de acción sean más compactos */
+    .table .btn-sm {
+      padding: 0.2rem 0.4rem;
+      font-size: 0.8rem;
+    }
+  </style>
 </head>
 <body class="container mt-4">
 
@@ -30,20 +84,41 @@
   <h2 class="mb-3">Listado de Facturas</h2>
   <a href="{{ url_for('facturas.nueva_factura') }}" class="btn btn-primary mb-3">Nueva Factura</a>
   
-  <form method="POST" action="{{ url_for('facturas.lista_facturas') }}">
-    <input type="text" name="search" class="form-control" placeholder="Buscar factura..." value="{{ search_query if search_query }}">
-    <button type="submit" class="btn btn-primary mt-2">Buscar</button>
+  <!-- Formulario para la busqueda-->
+  <form id="searchForm" method="GET" action="{{ url_for('facturas.lista_facturas') }}" class="mb-3">
+    <div class="input-group">
+      <input 
+        type="text" 
+        name="search" 
+        id="searchInput"
+        class="form-control" 
+        placeholder="Buscar por N° factura, RUT, cliente, estado (vencido, próximo)..." 
+        value="{{ search_query }}"
+        autocomplete="off">
+      <div class="input-group-append">
+        <button type="submit" class="btn btn-primary" id="searchButton">
+          <i class="bi bi-search"></i> Buscar
+        </button>
+        {% if search_query %}
+          <a href="{{ url_for('facturas.lista_facturas') }}" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Limpiar
+          </a>
+        {% endif %}
+      </div>
+    </div>
   </form>
 
-  <table class="table table-striped mt-4">
+<div style="width: 100%; margin: 0 auto;">
+  <table class="table table-striped table-sm mt-4" data-sort="desc">
     <thead>
       <tr>
         <th>N° Factura</th>
-        <th>Fecha</th>
+        <th id="dateHeader" class="sortable" onclick="sortTableByDate()">Fecha <i class="bi bi-sort-down"></i></th>
         <th>RUT Receptor</th>
         <th>Receptor</th>
         <th>Tipo Documento</th>
         <th>Condiciones de Pago</th>
+        <th>Fecha Vencimiento</th>
         <th>Monto Total</th>
         <th>Estado de Pago</th>
         <th>N° Cotización</th>
@@ -55,11 +130,36 @@
       {% for factura in facturas %}
       <tr>
         <td><a href="{{ url_for('facturas.editar_factura_por_numero', numero_factura=factura[5]) }}" class="text-primary">{{ factura[5] }}</a></td>
-        <td>{{ factura[6] }}</td>
+        <td>{{ (factura[6]|todate).strftime('%d-%m-%Y') }}</td>
         <td>{{ factura[1] }}</td>
         <td>{{ factura[2] }}</td>
         <td>{{ factura[3] }}</td>
         <td>{{ factura[4] }}</td>
+        <td>
+          {% if factura[4] == "30 días" %}
+            {% if factura[8] == "Pagado" %}
+              <div class="due-date">
+                {{ ((factura[6]|todate) + timedelta(days=30)).strftime('%d-%m-%Y') }}
+                <span class="badge bg-success">Factura pagada</span>
+              </div>
+            {% else %}
+              {% set fecha_vencimiento = (factura[6]|todate) + timedelta(days=30) %}
+              {% set dias_restantes = (fecha_vencimiento - today).days %}
+              <div class="due-date {% if fecha_vencimiento < today %}overdue{% endif %}">
+                {{ fecha_vencimiento.strftime('%d-%m-%Y') }}
+                {% if fecha_vencimiento < today %}
+                  <span class="badge bg-danger">Vencida por {{ abs(dias_restantes) }} días</span>
+                {% elif dias_restantes <= 5 %}
+                  <span class="badge bg-warning text-dark">{{ dias_restantes }} días restantes</span>
+                {% else %}
+                  <span class="badge bg-success">{{ dias_restantes }} días restantes</span>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% else %}
+            <span class="text-muted">Contado</span>
+          {% endif %}
+        </td>
         <td>${{ "{:,.0f}".format(factura[7]).replace(',', '.') }}</td>
         <td>{{ factura[8] }}</td>
         <td>{% if factura[9] %}<a href="{{ url_for('editar.editar_cotizacion_por_numero', numero_cotizacion=factura[9]) }}" class="text-primary">{{ factura[9] }}</a>{% else %}-{% endif %}</td>
@@ -73,6 +173,43 @@
       {% endfor %}
     </tbody>
   </table>
+</div>
+  <!-- Scripts -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="{{ url_for('static', filename='js/facturas.js') }}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Documento cargado');
+      
+      // Manejo del formulario de búsqueda
+      const searchForm = document.querySelector('form');
+      searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        console.log('Formulario enviado');
+        const searchInput = this.querySelector('input[name="search"]');
+        const searchValue = searchInput.value.trim();
+        console.log('Término de búsqueda:', searchValue);
+        
+        // Construir la URL con el parámetro de búsqueda
+        const url = '{{ url_for("facturas.lista_facturas") }}' + (searchValue ? '?search=' + encodeURIComponent(searchValue) : '');
+        console.log('Redirigiendo a:', url);
+        window.location.href = url;
+      });
 
+      // Manejo del ordenamiento por fecha
+      const dateHeader = document.getElementById('dateHeader');
+      if (dateHeader) {
+        console.log('Header de fecha encontrado en la carga inicial');
+        // Ordenar automáticamente al cargar la página
+        sortTableByDate();
+        dateHeader.addEventListener('click', function(e) {
+          console.log('Click en el header de fecha');
+          sortTableByDate();
+        });
+      } else {
+        console.log('Error: No se encontró el header de fecha');
+      }
+    });
+  </script>
 </body>
 </html>

@@ -17,6 +17,11 @@ app = Flask(__name__)
 UPLOAD_FOLDER = os.path.join('static', 'img', 'productos')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
+# Filtro personalizado para convertir strings a fechas
+@app.template_filter('todate')
+def todate_filter(date_str):
+    return datetime.strptime(date_str, '%Y-%m-%d').date()
+
 # Asegurarse de que el directorio de carga existe
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
@@ -44,8 +49,8 @@ app.register_blueprint(facturas_bp)
 
 @app.route('/buscar_cotizaciones')
 def buscar_cotizaciones():
-    cliente = request.args.get('cliente', '')
     monto = request.args.get('monto', '')
+    print(f"Buscando cotizaciones para monto: {monto}")  # Debug log
     
     # Conectar a la base de datos
     conn = sqlite3.connect('cotizaciones.db')
@@ -53,33 +58,40 @@ def buscar_cotizaciones():
     
     # Construir la consulta base
     query = """
-    SELECT id, numero_cotizacion, empresa, fecha, monto, 
-           ROUND(monto * 1.19) as monto_con_iva 
-    FROM cotizaciones 
-    WHERE 1=1
+    SELECT id, numero_cotizacion, empresa, fecha, monto,
+           ROUND(monto * 1.19) as monto_con_iva
+    FROM cotizaciones
+    WHERE numero_cotizacion IS NOT NULL
     """
     params = []
     
-    # Agregar filtros si se proporcionan
-    if cliente:
-        query += " AND empresa LIKE ?"
-        params.append(f"%{cliente}%")
-    
+    # Agregar filtro de monto si se proporciona
     if monto and monto.strip():
         try:
             monto_float = float(monto)
-            margen = monto_float * 0.10  # 10% de margen
-            query += " AND ROUND(monto * 1.19) BETWEEN ? AND ?"
-            params.extend([monto_float - margen, monto_float + margen])
-        except ValueError:
+            # Convertir el monto buscado (que incluye IVA) a monto sin IVA
+            monto_sin_iva = round(monto_float / 1.19)
+            print(f"Monto sin IVA: {monto_sin_iva}")  # Debug log
+            
+            query += """ 
+            AND monto = ?
+            """
+            params.append(monto_sin_iva)
+            
+        except ValueError as e:
+            print(f"Error al convertir monto: {e}")  # Debug log
             pass
     
-    # Ordenar por fecha descendente y limitar a 10 resultados
-    query += " ORDER BY fecha DESC LIMIT 10"
+    # Ordenar por fecha descendente
+    query += " ORDER BY fecha DESC"
+    
+    print(f"SQL Query: {query}")  # Debug log
+    print(f"Params: {params}")    # Debug log
     
     # Ejecutar la consulta
     cursor.execute(query, params)
     cotizaciones = cursor.fetchall()
+    print(f"Cotizaciones encontradas: {len(cotizaciones)}")  # Debug log
     
     # Formatear los resultados
     resultados = []

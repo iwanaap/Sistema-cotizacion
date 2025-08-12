@@ -1,6 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 
 facturas_bp = Blueprint('facturas', __name__)
@@ -34,25 +34,76 @@ init_db()
 
 @facturas_bp.route('/facturas', methods=['GET', 'POST'])
 def lista_facturas():
-    search_query = request.form.get('search', '').lower().strip()
+    # Obtener y validar el término de búsqueda
+    search_query = request.args.get('search', '').strip().lower()
+    print(f"\nTérmino de búsqueda: '{search_query}'")
+
     conn = sqlite3.connect(DB_FILE)
     cursor = conn.cursor()
     
-    cursor.execute("SELECT * FROM facturas ORDER BY id DESC")
-    facturas = cursor.fetchall()
-    conn.close()
+    try:
+        # Obtener todas las facturas primero
+        cursor.execute("SELECT * FROM facturas ORDER BY id DESC")
+        facturas = cursor.fetchall()
 
-    # Filtrar resultados si hay búsqueda
-    if search_query:
-        facturas_filtradas = []
-        for factura in facturas:
-            # Convertir todos los valores a string para búsqueda
-            valores = [str(valor).lower() for valor in factura if valor is not None]
-            if any(search_query in valor for valor in valores):
-                facturas_filtradas.append(factura)
-        facturas = facturas_filtradas
+        if search_query:
+            # Filtrar las facturas basado en el término de búsqueda
+            facturas_filtradas = []
+            today = datetime.now().date()
+            
+            for factura in facturas:
+                # Convertir valores a string para búsqueda
+                valores_busqueda = [
+                    str(factura[5]),  # numero_factura
+                    str(factura[1]),  # rut_receptor
+                    str(factura[2]),  # receptor
+                    str(factura[3]),  # tipo_documento
+                    str(factura[4]),  # condiciones_pago
+                    str(factura[8]),  # estado_pago
+                    str(factura[9]),  # numero_cotizacion
+                    str(factura[10])  # numero_oc
+                ]
+
+                # Calcular fecha de vencimiento si aplica
+                es_vencida = False
+                dias_restantes = None
+                if factura[4] == "30 días" and factura[6]:  # condiciones_pago y fecha
+                    fecha_factura = datetime.strptime(factura[6], '%Y-%m-%d').date()
+                    fecha_vencimiento = fecha_factura + timedelta(days=30)
+                    es_vencida = fecha_vencimiento < today
+                    dias_restantes = (fecha_vencimiento - today).days
+
+                # Agregar términos relacionados con vencimiento
+                if es_vencida and "vencid" in search_query:
+                    facturas_filtradas.append(factura)
+                    continue
+                
+                if not es_vencida and "vigente" in search_query:
+                    facturas_filtradas.append(factura)
+                    continue
+
+                if "prox" in search_query and dias_restantes is not None and 0 <= dias_restantes <= 5:
+                    facturas_filtradas.append(factura)
+                    continue
+
+                # Búsqueda normal en los campos
+                if any(search_query in valor.lower() for valor in valores_busqueda if valor):
+                    facturas_filtradas.append(factura)
+
+            facturas = facturas_filtradas
+
+    except Exception as e:
+        print(f"\nERROR en la consulta: {str(e)}")
+        facturas = []
+    finally:
+        conn.close()
     
-    return render_template('facturas.html', facturas=facturas, search_query=search_query)
+    return render_template('facturas.html', 
+                         facturas=facturas,
+                         search_query=search_query,
+                         today=datetime.now().date(),
+                         timedelta=timedelta,
+                         abs=abs)
 
 @facturas_bp.route('/facturas/editar/<string:numero_factura>', methods=['GET', 'POST'])
 def editar_factura_por_numero(numero_factura):
@@ -90,15 +141,17 @@ def editar_factura_por_numero(numero_factura):
                 conn.close()
                 return "Error: Ya existe una factura con ese número", 400
 
+        observaciones = request.form.get('observaciones', '')
+        
         cursor.execute('''
             UPDATE facturas 
             SET rut_receptor=?, receptor=?, tipo_documento=?, condiciones_pago=?,
                 numero_factura=?, fecha=?, monto_total=?, estado_pago=?,
-                numero_cotizacion=?, numero_oc=?
+                numero_cotizacion=?, numero_oc=?, observaciones=?
             WHERE id=?
         ''', (rut_receptor, receptor, tipo_documento, condiciones_pago,
               numero_factura_nuevo, fecha, monto_total, estado_pago,
-              numero_cotizacion, numero_oc, factura[0]))
+              numero_cotizacion, numero_oc, observaciones, factura[0]))
         
         # Actualizar cotización relacionada
         if numero_cotizacion:
@@ -192,15 +245,17 @@ def nueva_factura():
                 return "Error: La orden de compra especificada no existe", 400
         
         # Insertar nueva factura
+        observaciones = request.form.get('observaciones', '')
+        
         cursor.execute('''
             INSERT INTO facturas (
                 rut_receptor, receptor, tipo_documento, condiciones_pago,
                 numero_factura, fecha, monto_total, estado_pago,
-                numero_cotizacion, numero_oc
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                numero_cotizacion, numero_oc, observaciones
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ''', (rut_receptor, receptor, tipo_documento, condiciones_pago,
               numero_factura, fecha, monto_total, estado_pago,
-              numero_cotizacion, numero_oc))
+              numero_cotizacion, numero_oc, observaciones))
         
         # Actualizar la tabla de cotizaciones si hay número de cotización
         if numero_cotizacion:

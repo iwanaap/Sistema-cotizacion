@@ -20,12 +20,24 @@ function seleccionarCotizacion(numeroCotizacion) {
 
 // Funciones de búsqueda
 function buscarCotizacionesRelacionadas() {
-    const cliente = document.getElementById('cliente').value.trim();
+    console.log('Iniciando búsqueda de cotizaciones...');
     const montoTotal = cleanMoney(document.getElementById('monto_total').value);
+    const tbody = document.getElementById('cotizacionesRelacionadas');
     
-    if (!cliente && !montoTotal) return;
+    if (!montoTotal) {
+        console.log('No hay monto para buscar');
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Ingrese un monto para buscar cotizaciones</td></tr>';
+        return;
+    }
 
-    fetch(`/buscar_cotizaciones?cliente=${encodeURIComponent(cliente)}&monto=${encodeURIComponent(montoTotal)}`)
+    console.log('Buscando cotizaciones para monto:', montoTotal);
+    tbody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Buscando...</span></div></td></tr>';
+
+    // Asegurarse de que el monto es un número
+    const montoNumerico = parseInt(montoTotal.replace(/[^\d]/g, ''));
+    console.log('Monto numérico a buscar:', montoNumerico);
+
+    fetch(`/buscar_cotizaciones?monto=${encodeURIComponent(montoNumerico)}`)
         .then(response => response.json())
         .then(cotizaciones => {
             const tbody = document.getElementById('cotizacionesRelacionadas');
@@ -38,11 +50,17 @@ function buscarCotizacionesRelacionadas() {
 
             cotizaciones.forEach(cot => {
                 const row = document.createElement('tr');
+                const montoIngresado = cleanMoney(document.getElementById('monto_total').value);
+                const esMontoCorrecto = parseInt(cot.monto_total) === parseInt(montoIngresado);
+                
                 row.innerHTML = `
                     <td>${cot.numero}</td>
                     <td>${cot.empresa}</td>
                     <td>${new Date(cot.fecha).toLocaleDateString()}</td>
-                    <td>$${formatMoney(cot.monto_total)}</td>
+                    <td class="${esMontoCorrecto ? 'text-success fw-bold' : ''}">
+                        $${formatMoney(cot.monto_total)}
+                        ${esMontoCorrecto ? '<i class="bi bi-check-circle-fill"></i>' : ''}
+                    </td>
                     <td>
                         <button class="btn btn-sm btn-primary" onclick="seleccionarCotizacion('${cot.numero}')">
                             Seleccionar
@@ -73,6 +91,9 @@ document.addEventListener('DOMContentLoaded', function() {
             montoInput.value = formatMoney(montoInput.value);
         }
 
+        // Variable para almacenar el timeout
+        let timeoutId;
+
         // Manejar entrada de números
         montoInput.addEventListener('input', function(e) {
             const cursorPosition = this.selectionStart;
@@ -85,6 +106,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const newLength = this.value.length;
             const newPosition = cursorPosition + (newLength - oldLength);
             this.setSelectionRange(newPosition, newPosition);
+
+            // Limpiar el timeout anterior si existe
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+
+            // Establecer un nuevo timeout para buscar después de que el usuario deje de escribir
+            timeoutId = setTimeout(() => {
+                buscarCotizacionesRelacionadas();
+            }, 500); // esperar 500ms después de que el usuario deje de escribir
         });
     }
 
