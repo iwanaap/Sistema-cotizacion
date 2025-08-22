@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Tareas</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.css">
+    <style>
+        .task-board { 
+            background-color: #f8f9fa; 
+            padding: 20px; 
+            margin-bottom: 20px;
+        }
+        .task-column { 
+            background-color: #ebecf0; 
+            border-radius: 8px; 
+            padding: 10px; 
+            margin: 10px; 
+            height: 600px; /* Altura fija para la columna */
+        }
+        .task-column h4 {
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: rgba(255,255,255,0.5);
+            border-radius: 5px;
+        }
+        .tasks-container {
+            height: 500px; /* Altura fija para el contenedor de tareas */
+            overflow-y: auto; /* Habilitar scroll vertical */
+            padding: 10px;
+            background-color: rgba(255,255,255,0.4);
+            border-radius: 3px;
+            border: 2px dashed transparent;
+            transition: all 0.3s ease;
+            /* Estilo personalizado para la barra de scroll */
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e0 transparent;
+            margin-right: -5px; /* Compensar el espacio del scrollbar */
+        }
+        /* Estilos para la barra de scroll en Chrome/Safari */
+        .tasks-container::-webkit-scrollbar {
+            width: 5px;
+        }
+        .tasks-container::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 5px;
+        }
+        .tasks-container::-webkit-scrollbar-thumb {
+            background-color: #cbd5e0;
+            border-radius: 10px;
+        }
+        .tasks-container::-webkit-scrollbar-thumb:hover {
+            background-color: #a0aec0;
+        }
+        /* Indicador visual de scroll */
+        .tasks-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 20px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.05));
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .tasks-container:not(:hover)::-webkit-scrollbar-thumb {
+            background-color: transparent;
+        }
+        .tasks-container:hover::after {
+            opacity: 1;
+        }
+        .tasks-container.gu-over {
+            background-color: rgba(255,255,255,0.8);
+            border-color: #0d6efd;
+        }
+        .task-card { 
+            background-color: white; 
+            border-radius: 6px; 
+            padding: 12px; 
+            margin-bottom: 12px; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); 
+            cursor: move; 
+            transition: all 0.2s ease;
+            user-select: none;
+            position: relative;
+            z-index: 1;
+        }
+        .task-card:last-child {
+            margin-bottom: 0;
+        }
+        .task-card:hover { 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+            z-index: 2;
+        }
+        .add-task-btn { 
+            width: 100%; 
+            margin-bottom: 10px; 
+        }
+        
+        /* Estilos según el estado */
+        #pending .task-card { border-left: 4px solid #ffc107; }
+        #in-progress .task-card { border-left: 4px solid #0d6efd; }
+        #completed .task-card { 
+            border-left: 4px solid #198754;
+            background-color: #d1e7dd;
+        }
+
+        /* Estilos durante el arrastre */
+        .gu-mirror { 
+            cursor: grabbing !important;
+            opacity: 0.8 !important;
+            transform: rotate(2deg);
+        }
+        .gu-transit {
+            opacity: 0.2 !important;
+            background-color: #e9ecef !important;
+        }
+        .gu-hide {
+            display: none !important;
+        }
+    </style>
+</head>
+<body class="container mt-4">
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link active" href="/">Cotizaciones</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('ordenes_compra.lista_ordenes') }}">Órdenes de Compra</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('facturas.lista_facturas') }}">Facturas</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('clientes.gestionar_clientes') }}">Clientes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('tasks.tasks_view') }}">Tareas</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <div class="col-12 mb-3">
+                <h2>Gestión de Tareas</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addTaskModal">
+                    <i class="fas fa-plus"></i> Nueva Tarea
+                </button>
+            </div>
+        </div>
+        <div class="row task-board">
+            <div class="col-md-4">
+                <div class="task-column" id="pending">
+                    <h4 class="text-center">Pendientes</h4>
+                    <div class="tasks-container"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="task-column" id="in-progress">
+                    <h4 class="text-center">En Progreso</h4>
+                    <div class="tasks-container"></div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="task-column" id="completed">
+                    <h4 class="text-center">Completadas</h4>
+                    <div class="tasks-container"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Modal para agregar/editar tarea -->
+    <div class="modal fade" id="addTaskModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nueva Tarea</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="taskForm">
+                        <input type="hidden" id="taskId" name="taskId">
+                        <div class="mb-3">
+                            <label for="taskTitle" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="taskTitle" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDescription" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="taskDescription" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskPriority" class="form-label">Prioridad</label>
+                            <select class="form-control" id="taskPriority">
+                                <option value="low">Baja</option>
+                                <option value="medium">Media</option>
+                                <option value="high">Alta</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="taskDueDate" class="form-label">Fecha límite</label>
+                            <input type="date" class="form-control" id="taskDueDate">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="saveTask">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dragula/3.7.2/dragula.min.js"></script>
+    <script src="{{ url_for('static', filename='js/tasks.js') }}"></script>
+</body>
+</html>
