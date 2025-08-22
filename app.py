@@ -10,6 +10,7 @@ from clientes import clientes_bp  # Importar el Blueprint de clientes
 from editar import editar_bp  # Importar el Blueprint de edición
 from ordenes_compra import ordenes_compra_bp  # Importar el Blueprint de órdenes de compra
 from facturas import facturas_bp  # Importar el Blueprint de facturas
+from tasks import tasks_bp  # Importar el Blueprint de tareas
 
 app = Flask(__name__)
 
@@ -46,6 +47,7 @@ app.register_blueprint(clientes_bp)
 app.register_blueprint(editar_bp)
 app.register_blueprint(ordenes_compra_bp)
 app.register_blueprint(facturas_bp)
+app.register_blueprint(tasks_bp)  # Registrar el Blueprint de tareas
 
 @app.route('/buscar_cotizaciones')
 def buscar_cotizaciones():
