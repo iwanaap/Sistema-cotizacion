@@ -59,6 +59,7 @@ def lista_facturas():
                     str(factura[2]),  # receptor
                     str(factura[3]),  # tipo_documento
                     str(factura[4]),  # condiciones_pago
+                    str(factura[7]),  # monto_total
                     str(factura[8]),  # estado_pago
                     str(factura[9]),  # numero_cotizacion
                     str(factura[10])  # numero_oc
