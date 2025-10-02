@@ -167,7 +167,7 @@
         <td>{% if factura[9] %}<a href="{{ url_for('editar.editar_cotizacion_por_numero', numero_cotizacion=factura[9]) }}" class="text-primary">{{ factura[9] }}</a>{% else %}-{% endif %}</td>
         <td>{% if factura[10] %}<a href="{{ url_for('ordenes_compra.editar_orden_por_numero', numero_oc=factura[10]) }}" class="text-primary">{{ factura[10] }}</a>{% else %}-{% endif %}</td>
         <td>
-          <a href="{{ url_for('facturas.editar_factura_por_numero', numero_factura=factura[5]) }}" class="btn btn-warning btn-sm">Editar</a>
+          <a href="{{ url_for('facturas.editar_factura_por_numero', numero_factura=factura[5]) }}" class="btn btn-warning btn-sm" target="_blank">Editar</a>
           <a href="{{ url_for('facturas.eliminar_factura_por_numero', numero_factura=factura[5]) }}" class="btn btn-danger btn-sm" 
              onclick="return confirm('¿Seguro que deseas eliminar esta factura?');">Eliminar</a>
         </td>

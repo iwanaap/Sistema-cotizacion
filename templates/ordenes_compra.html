@@ -132,9 +132,9 @@
         <td>{% if orden[9] %}<a href="{{ url_for('editar.editar_cotizacion_por_numero', numero_cotizacion=orden[9]) }}" class="text-primary">{{ orden[9] }}</a>{% else %}-{% endif %}</td>
         <td>
           {% if orden[10] %}
-          <a href="{{ url_for('static', filename=orden[10]) }}" class="btn btn-success btn-sm">Ver PDF</a>
+          <a href="{{ url_for('static', filename=orden[10]) }}" class="btn btn-success btn-sm" target="_blank">Ver PDF</a>
           {% endif %}
-          <a href="{{ url_for('ordenes_compra.editar_orden_por_numero', numero_oc=orden[1]) }}" class="btn btn-warning btn-sm">Editar</a>
+          <a href="{{ url_for('ordenes_compra.editar_orden_por_numero', numero_oc=orden[1]) }}" class="btn btn-warning btn-sm" target="_blank">Editar</a>
           <a href="{{ url_for('ordenes_compra.eliminar_orden_por_numero', numero_oc=orden[1]) }}" class="btn btn-danger btn-sm" 
              onclick="return confirm('¿Seguro que deseas eliminar esta orden de compra?');">Eliminar</a>
         </td>
