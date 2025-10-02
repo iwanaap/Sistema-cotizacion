@@ -37,6 +37,9 @@
         <li class="nav-item">
           <a class="nav-link" href="{{ url_for('tasks.tasks_view') }}">Tareas</a>
         </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('pagos') }}">Pagos</a>
+        </li>
       </ul>
     </div>
   </nav>
@@ -103,6 +106,7 @@
         <td>
           <a href="/pdfs/{{ coti.id }}" class="btn btn-success btn-sm" target="_blank">PDF</a>
           <a href="{{ url_for('editar.editar_cotizacion', id=coti.id) }}" class="btn btn-warning btn-sm" target="_blank">Editar</a>
+          <a href="/duplicar/{{ coti.id }}" class="btn btn-info btn-sm" onclick="return confirm('¿Seguro que deseas duplicar esta cotización?');">Duplicar</a>
           <a href="/eliminar/{{ coti.id }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que deseas eliminar esta cotización?');">Eliminar</a>
         </td>
       </tr>
