@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gestión de Pagos</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    .form-select-sm {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.875rem;
+      border-radius: 0.2rem;
+    }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body class="container mt-4">
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+    <div class="container-fluid">
+      <ul class="navbar-nav">
+        <li class="nav-item">
+          <a class="nav-link" href="/">Cotizaciones</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('ordenes_compra.lista_ordenes') }}">Órdenes de Compra</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('facturas.lista_facturas') }}">Facturas</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('clientes.gestionar_clientes') }}">Clientes</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{{ url_for('tasks.tasks_view') }}">Tareas</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link active" href="{{ url_for('pagos') }}">Pagos</a>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <h2 class="mb-3">Gestión de Pagos</h2>
+  
+  <!-- Formulario para agregar nuevo pago -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5>Agregar Nuevo Pago</h5>
+    </div>
+    <div class="card-body">
+      <form method="POST" action="{{ url_for('pagos') }}">
+        <div class="row">
+          <div class="col-md-3">
+            <div class="mb-3">
+              <label for="fecha" class="form-label">Fecha</label>
+              <input type="date" class="form-control" id="fecha" name="fecha" required>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="mb-3">
+              <label for="emisor" class="form-label">Emisor</label>
+              <input type="text" class="form-control" id="emisor" name="emisor" required>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="mb-3">
+              <label for="rut_emisor" class="form-label">RUT Emisor</label>
+              <input type="text" class="form-control" id="rut_emisor" name="rut_emisor" placeholder="12345678-9" required>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="mb-3">
+              <label for="monto" class="form-label">Monto</label>
+              <input type="number" class="form-control" id="monto" name="monto" step="0.01" required>
+            </div>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Agregar Pago</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Buscador -->
+  <form method="GET" action="{{ url_for('pagos') }}" class="mb-3">
+    <div class="input-group">
+      <input type="text" name="search" class="form-control" placeholder="Buscar por emisor, RUT o monto..." value="{{ search_query }}">
+      <button type="submit" class="btn btn-outline-primary">Buscar</button>
+      {% if search_query %}
+        <a href="{{ url_for('pagos') }}" class="btn btn-outline-secondary">Limpiar</a>
+      {% endif %}
+    </div>
+  </form>
+
+  <!-- Tabla de pagos -->
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Emisor</th>
+        <th>RUT Emisor</th>
+        <th>Monto</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for pago in pagos %}
+      <tr>
+        <td>{{ pago[1] }}</td>
+        <td>{{ pago[2] }}</td>
+        <td>{{ pago[3] }}</td>
+        <td>${{ "{:,.2f}".format(pago[4]) }}</td>
+        <td>
+          <a href="{{ url_for('eliminar_pago', id=pago[0]) }}" class="btn btn-danger btn-sm" onclick="return confirm('¿Seguro que deseas eliminar este pago?');">Eliminar</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if not pagos %}
+    <div class="alert alert-info" role="alert">
+      No se encontraron pagos.
+      {% if search_query %}
+        <br>Intenta con otros términos de búsqueda.
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <script>
+    // Establecer la fecha actual por defecto
+    document.getElementById('fecha').valueAsDate = new Date();
+  </script>
+</body>
+</html>

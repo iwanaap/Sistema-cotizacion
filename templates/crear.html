@@ -24,6 +24,12 @@
                 <li class="nav-item">
                   <a class="nav-link" href="{{ url_for('clientes.gestionar_clientes') }}">Clientes</a>
                 </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('tasks.tasks_view') }}">Tareas</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('pagos') }}">Pagos</a>
+                </li>
             </ul>
         </div>
     </nav>
@@ -336,7 +342,14 @@
       $(document).ready(function () {
           let typingTimer;
           const doneTypingInterval = 300;  // esperar 300ms después de que el usuario deje de escribir
+          let hasUnsavedChanges = false;
+          let isSubmitting = false;
           
+          // Función para marcar que hay cambios sin guardar
+          function markAsChanged() {
+              hasUnsavedChanges = true;
+          }
+
           // Función para buscar y rellenar datos del cliente
           function buscarYRellenarCliente(nombre) {
               $.getJSON("/clientes/buscar_cliente", { nombre: nombre })
@@ -371,6 +384,32 @@
                       $('#empresa, #rut, #telefono, #email').val('');
                   });
           }
+
+          // Detectar cambios en el formulario
+          $('form input, form textarea, form select').on('input change', function() {
+              markAsChanged();
+          });
+
+          // Detectar cuando se agregan o eliminan productos
+          $(document).on('click', '.btn-danger', function() {
+              markAsChanged();
+          });
+
+          $(document).on('click', '#agregarProducto', function() {
+              markAsChanged();
+          });
+
+          // Evento para detectar cuando se intenta salir de la página
+          $(window).on('beforeunload', function() {
+              if (hasUnsavedChanges && !isSubmitting) {
+                  return 'ATENCIÓN: Estás saliendo y no has guardado los cambios. ¿Realmente quieres salir?';
+              }
+          });
+
+          // Marcar que se está enviando el formulario para evitar la alerta
+          $('form').on('submit', function() {
+              isSubmitting = true;
+          });
 
           // Evento al escribir en el campo de contacto
           $('#contacto').on('input', function() {

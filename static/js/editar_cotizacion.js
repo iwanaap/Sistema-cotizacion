@@ -1,4 +1,12 @@
 $(document).ready(function () {
+    let hasUnsavedChanges = false;
+    let isSubmitting = false;
+
+    // Función para marcar que hay cambios sin guardar
+    function markAsChanged() {
+        hasUnsavedChanges = true;
+    }
+
     // Función para formatear valores con "$" y separador de miles con punto
     function formatMoney(value) {
         let number = parseFloat(value) || 0;
@@ -162,6 +170,7 @@ $(document).ready(function () {
     // Manejo del formulario
     $("form").on("submit", function (e) {
         e.preventDefault();
+        isSubmitting = true;
         
         var formData = new FormData(this);
         formData.delete('productos');
@@ -227,4 +236,30 @@ $(document).ready(function () {
 
     // Inicialización
     actualizarProductosInput();
+
+    // Detectar cambios en el formulario
+    $('form input, form textarea, form select').on('input change', function() {
+        markAsChanged();
+    });
+
+    // Detectar cuando se agregan o eliminan productos
+    $(document).on('click', '.btn-danger', function() {
+        markAsChanged();
+    });
+
+    $(document).on('click', '#agregarProducto', function() {
+        markAsChanged();
+    });
+
+    // Evento para detectar cuando se intenta salir de la página
+    $(window).on('beforeunload', function() {
+        if (hasUnsavedChanges && !isSubmitting) {
+            return 'ATENCIÓN: Estás saliendo y no has guardado los cambios. ¿Realmente quieres salir?';
+        }
+    });
+
+    // Marcar que se está enviando el formulario para evitar la alerta
+    $('form').on('submit', function() {
+        isSubmitting = true;
+    });
 });
